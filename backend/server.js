@@ -164,6 +164,26 @@ app.get('/api/catches', authMiddleware, async (req, res) => {
   }
 });
 
+// Smazání úlovku
+app.delete('/api/catches/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query(
+      'DELETE FROM catches WHERE id = $1 AND user_id = $2',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Úlovek nenalezen nebo nemáte oprávnění.' });
+    }
+
+    res.json({ message: 'Úlovek byl úspěšně smazán.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru při mazání.' });
+  }
+});
+
 app.post('/api/catches', authMiddleware, async (req, res) => {
   const { species, weight_g, length_cm, revir, bait, note, caught_date, caught_time, image_url } = req.body;
   try {

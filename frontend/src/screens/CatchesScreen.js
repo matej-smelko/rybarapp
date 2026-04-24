@@ -96,17 +96,6 @@ export default function CatchesScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* HORNÍ LIŠTA (Logo + Uživatel) */}
-      <View style={styles.topBar}>
-        <Text style={styles.logo}>Rybář<Text style={{color: '#B8860B'}}>App</Text></Text>
-        <View style={styles.userSection}>
-          <Text style={styles.userNameText}>{user?.name?.split(' ')[0]}</Text>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
-          </View>
-        </View>
-      </View>
-
       <View style={styles.container}>
         {/* TITULEK + PŘIDAT */}
         <View style={styles.titleRow}>
