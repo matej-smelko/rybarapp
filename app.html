@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RybářApp – Evidence úlovků a fórum</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a5c3a;
+    --primary-light: #e8f4ed;
+    --primary-mid: #2d7a52;
+    --accent: #c8860a;
+    --accent-light: #fef3e2;
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --surface2: #f0ede7;
+    --border: rgba(0,0,0,0.1);
+    --text: #1a1a18;
+    --text2: #5a5a55;
+    --text3: #8a8a82;
+    --danger: #c0392b;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    background: var(--surface);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0,0,0,0.15);
+  }
+
+  /* AUTH */
+  .auth-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 48px 28px 32px;
+  }
+  .auth-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .auth-logo span { color: var(--accent); }
+  .auth-sub {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 48px;
+  }
+  .auth-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+  }
+  .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--primary); }
+  .form-input.error { border-color: var(--danger); }
+  .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-mid); }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: #fee; color: var(--danger); border: 1px solid #fcc; }
+  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; border-radius: 8px; }
+  .btn:active { transform: scale(0.98); }
+
+  /* TOP NAV */
+  .topbar {
+    padding: 16px 20px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--primary); }
+  .topbar-title span { color: var(--accent); }
+  .topbar-user { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* BOTTOM NAV */
+  .bottomnav {
+    display: flex;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 12px 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    color: var(--text3);
+    font-size: 10px;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--primary); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+
+  /* CONTENT AREA */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 24px;
+  }
+
+  /* SECTION HEADERS */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  /* CATCH CARD */
+  .catch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .catch-card:hover { box-shadow: var(--shadow); }
+  .catch-icon {
+    width: 46px; height: 46px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .catch-info { flex: 1; min-width: 0; }
+  .catch-species { font-size: 15px; font-weight: 600; color: var(--text); }
+  .catch-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .catch-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--primary-light);
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+  .catch-detail { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--primary); }
+  .stat-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* MODAL / FORM SHEET */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 24px 40px;
+    width: 100%;
+    max-width: 430px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 20px; }
+
+  /* FORUM */
+  .forum-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+  }
+  .forum-card:hover { box-shadow: var(--shadow); }
+  .forum-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .forum-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .forum-author { font-size: 13px; font-weight: 600; }
+  .forum-date { font-size: 11px; color: var(--text3); }
+  .forum-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .forum-body { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .forum-footer { display: flex; gap: 12px; margin-top: 10px; align-items: center; }
+  .forum-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .tag-tip { background: #e8f4ed; color: var(--primary); }
+  .tag-catch { background: #e8f0fe; color: #1a56a3; }
+  .tag-gear { background: #fef3e2; color: var(--accent); }
+  .tag-disc { background: #f4e8fe; color: #6a2ab0; }
+  .forum-likes { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .forum-likes:hover { color: var(--primary); }
+  .forum-comments { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+
+  /* PROFILE */
+  .profile-hero {
+    background: linear-gradient(135deg, var(--primary-light), #fff);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .profile-avatar-big {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .profile-name { font-family: 'DM Serif Display', serif; font-size: 20px; }
+  .profile-email { font-size: 13px; color: var(--text2); }
+  .profile-role { font-size: 11px; color: var(--primary); font-weight: 600; background: var(--primary-light); padding: 2px 8px; border-radius: 5px; display: inline-block; margin-top: 4px; }
+
+  .list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item-icon { font-size: 18px; margin-right: 12px; }
+  .list-item-label { color: var(--text); flex: 1; }
+  .list-item-value { color: var(--text2); font-size: 13px; }
+
+  /* DETAIL VIEW */
+  .detail-header {
+    background: var(--primary-light);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .detail-fish-icon { font-size: 48px; margin-bottom: 8px; }
+  .detail-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--primary); }
+  .detail-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .detail-field { background: var(--surface2); border-radius: 10px; padding: 12px; }
+  .detail-field-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); margin-bottom: 4px; }
+  .detail-field-value { font-size: 15px; font-weight: 500; color: var(--text); }
+
+  .back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--primary);
+    font-family: inherit;
+    font-weight: 500;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  /* FORUM DETAIL */
+  .comment {
+    display: flex;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .comment:last-child { border-bottom: none; }
+  .comment-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .comment-body { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .comment-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-text { font-size: 15px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+  .empty-sub { font-size: 13px; }
+
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 500;
+    animation: fadeInOut 2.5s ease forwards;
+    white-space: nowrap;
+  }
+  @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(10px)} 15%{opacity:1;transform:translateX(-50%) translateY(0)} 75%{opacity:1} 100%{opacity:0} }
+
+  .select-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  .select-input:focus { border-color: var(--primary); }
+
+  textarea.form-input { resize: vertical; min-height: 80px; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+  .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ENCYCLOPEDIA */
+  .encyc-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .encyc-search input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    flex: 1;
+  }
+  .encyc-search input::placeholder { color: var(--text3); }
+
+  .fish-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+.fish-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: white;
+  }
+
+  .fish-card:hover { 
+    transform: translateY(-2px); 
+    box-shadow: var(--shadow); 
+  }
+
+  .fish-card-top {
+    height: 150px; 
+    padding: 18px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .fish-card-top img {
+    max-width: 100%;
+    max-height: 80px;
+    object-fit: contain;
+    margin-bottom: 8px;
+  }
+
+  .fish-image-big { 
+    font-size: 36px; 
+    margin-bottom: 6px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fish-card-name { 
+    font-size: 14px; 
+    font-weight: 600; 
+    line-height: 1.2;
+  }
+
+  .fish-card-latin { 
+    font-size: 10px; 
+    font-style: italic; 
+    margin-top: 2px; 
+    opacity: 0.65; 
+  }
+
+  .fish-card-bottom {
+    margin-top: auto; 
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(0,0,0,0.07);
+    background: rgba(0,0,0,0.02);
+  }
+  .fish-mira-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+  }
+  .fish-difficulty {
+    display: flex;
+    gap: 2px;
+  }
+  .diff-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  /* FISH DETAIL */
+  .fish-detail-hero {
+    border-radius: var(--radius);
+    padding: 24px 16px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .fish-detail-image { font-size: 56px; margin-bottom: 8px; }
+  .fish-detail-name { font-family: 'DM Serif Display', serif; font-size: 26px; }
+  .fish-detail-latin { font-size: 13px; font-style: italic; margin-top: 3px; opacity: 0.7; }
+
+  .info-section { margin-bottom: 16px; }
+  .info-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .info-box {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .info-box-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text3); margin-bottom: 3px; }
+  .info-box-val { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .bait-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bait-chip {
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  .season-bar {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .season-month {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 600;
+  }
+  .season-month.active { background: var(--primary); color: #fff; }
+  .season-month.closed { background: var(--surface2); color: var(--text3); }
+  .season-month.partial { background: var(--accent-light); color: var(--accent); }
+
+  .fact-box {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const FISH_EMOJI = { 'Kapr': '🎣', 'Štika': '🐟', 'Pstruh': '🐠', 'Candát': '🦈', 'Sumec': '🐡', 'Lín': '🐟', 'Okoun': '🐟', 'Cejn': '🐟' };
+const FISH_SPECIES = ['Kapr', 'Štika', 'Pstruh', 'Candát', 'Sumec', 'Lín', 'Okoun', 'Cejn'];
+const REVIRY = ['Revír Ostravice č. 1', 'Revír Odra – Svinov', 'Revír Olše – Těšín', 'Revír Morava – Olomouc', 'Revír Bečva – Přerov', 'Přehrada Slezská Harta'];
+const FORUM_CATS = ['Tipy', 'Úlovky', 'Vybavení', 'Diskuse'];
+
+// ENCYCLOPEDIA DATA
+const FISH_DB = [
+  {
+    id: 'amur-bily', name: 'Amur bílý', latin: 'Ctenopharyngodon idella', image: 'img/amur-bily.png',
+    color: '#4a5d23', colorLight: '#f1f5e9', colorText: '#283313',
+    mira: 50, maxKg: 50, maxCm: 150, difficulty: 4,
+    popis: 'Nejdelší zástupce našich kaprovitých ryb. Asijský druh dovezený pro regulaci vodních rostlin.',
+    nastrahy: ['Rákos', 'Kukuřice', 'Mirabelky', 'Rohlík'],
+    sezona: [false, false, false, false, true, true, true, true, true, false, false, false],
+    habitat: 'Zarostlé rybníky a slepá ramena řek', zaznam: 'ČR: 27 kg',
+    hloubka: '0.5–2 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'bolen-dravy', name: 'Bolen dravý', latin: 'Aspius aspius', image: 'img/bolen-dravy.png',
+    color: '#708090', colorLight: '#f0f2f4', colorText: '#2f353b',
+    mira: 40, maxKg: 12, maxCm: 100, difficulty: 4,
+    popis: 'Dravá kaprovitá ryba lovící bleskovými výpady u hladiny.',
+    nastrahy: ['Povrchové woblery', 'Třpytky', 'Streamery'],
+    sezona: [false, false, false, false, false, true, true, true, true, true, true, false],
+    habitat: 'Hladiny nádrží a velkých řek', zaznam: 'ČR: 11,5 kg',
+    hloubka: '0–1 m', rychlost: 'Střední proud'
+  },
+  {
+    id: 'candat-obecny', name: 'Candát obecný', latin: 'Sander lucioperca', image: 'img/candat-obecny.png',
+    color: '#6e7f80', colorLight: '#f0f4f5', colorText: '#343d3e',
+    mira: 45, maxKg: 15, maxCm: 110, difficulty: 5,
+    popis: 'Nezaměnitelná dravá ryba aktivní za soumraku a v noci. Má tzv. psí zuby.',
+    nastrahy: ['Mrtvá rybička', 'Gumové nástrahy', 'Woblery'],
+    sezona: [true, false, false, false, false, true, true, true, true, true, true, true],
+    habitat: 'Tvrdé dno, hloubky u hrází', zaznam: 'ČR: 14,2 kg',
+    hloubka: '3–15 m', rychlost: 'Stojatá i tekoucí'
+  },
+  {
+    id: 'candat-vychodni', name: 'Candát východní', latin: 'Sander volgensis', image: 'img/candat-vychodni.png',
+    color: '#7f8c8d', colorLight: '#f2f2f2', colorText: '#2c3e50',
+    mira: 0, maxKg: 2, maxCm: 50, difficulty: 4,
+    popis: 'Menší druh okounovité dravé ryby. Chybí mu výrazné psí zuby.',
+    nastrahy: ['Drobné rybky', 'Gumové nástrahy'],
+    sezona: [true, false, false, false, false, true, true, true, true, true, true, true],
+    habitat: 'Dolní toky velkých řek (Dunajské povodí)', zaznam: 'N/A',
+    hloubka: '2–8 m', rychlost: 'Střední proud'
+  },
+  {
+    id: 'cejn-perletovy', name: 'Cejn perleťový', latin: 'Abramis sapa', image: 'img/cejn-perletovy.png',
+    color: '#bdc3c7', colorLight: '#f4f6f7', colorText: '#2c3e50',
+    mira: 0, maxKg: 1, maxCm: 40, difficulty: 4,
+    popis: 'Cejn vyskytující se v dunajském povodí s velmi dlouhou řitní ploutví.',
+    nastrahy: ['Larvy hmyzu', 'Červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Dolní toky řek Moravy a Dyje', zaznam: 'N/A',
+    hloubka: '1–3 m', rychlost: 'Mírný proud'
+  },
+  {
+    id: 'cejn-siny', name: 'Cejn siný', latin: 'Abramis ballerus', image: 'img/cejn-siny.png',
+    color: '#7f8c8d', colorLight: '#ecf0f1', colorText: '#2c3e50',
+    mira: 0, maxKg: 1.5, maxCm: 55, difficulty: 4,
+    popis: 'Menší druh cejna s protaženým tělem a špičatým rypcem.',
+    nastrahy: ['Plankton', 'Drobní červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Hlubší tekoucí vody velkých řek', zaznam: '2 kg',
+    hloubka: '2–5 m', rychlost: 'Střední proud'
+  },
+  {
+    id: 'cejn-velky', name: 'Cejn velký', latin: 'Abramis brama', image: 'img/cejn-velky.png',
+    color: '#a0a0a0', colorLight: '#f7f7f7', colorText: '#4d4d4d',
+    mira: 0, maxKg: 6, maxCm: 90, difficulty: 1,
+    popis: 'Náš nejběžnější druh cejna. Žije v početných hejnech a filtruje potravu z bahna.',
+    nastrahy: ['Červi', 'Kukuřice', 'Těsto'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Přehrady, pomalé řeky', zaznam: '6,1 kg',
+    hloubka: '2–10 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'cejnek-maly', name: 'Cejnek malý', latin: 'Blicca bjoerkna', image: 'img/cejnek-maly.png',
+    color: '#c0c0c0', colorLight: '#f5f5f5', colorText: '#333333',
+    mira: 0, maxKg: 1.2, maxCm: 45, difficulty: 1,
+    popis: 'Menší zástupce cejnů, podobný cejnu velkému, ale má větší oko a načervenalé párové ploutve.',
+    nastrahy: ['Červi', 'Pečivo'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Pomalé řeky a rybníky', zaznam: '1 kg',
+    hloubka: '1–4 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'drsek-mensi', name: 'Drsek menší', latin: 'Zingel streber', image: 'img/drsek-mensi.png',
+    color: '#8b7d6b', colorLight: '#f5f5dc', colorText: '#4a3d2e',
+    mira: 0, maxKg: 0.2, maxCm: 18, difficulty: 0,
+    popis: 'Štíhlá vzácná rybka připomínající candáta. Žije v silném proudu u dna.',
+    nastrahy: ['Chráněný - neloví se'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Proudné úseky Moravy a Dyje', zaznam: 'N/A',
+    hloubka: '0.5–1 m', rychlost: 'Velmi rychlá'
+  },
+  {
+    id: 'drsek-vetsi', name: 'Drsek větší', latin: 'Zingel zingel', image: 'img/drsek-vetsi.png',
+    color: '#704214', colorLight: '#fdf5e6', colorText: '#3d2b1f',
+    mira: 0, maxKg: 1, maxCm: 50, difficulty: 0,
+    popis: 'Proudomilná ryba podobná candátu. Kriticky ohrožený druh dunajského povodí.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Koryta velkých nížinných řek', zaznam: 'N/A',
+    hloubka: '1–3 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'hlavacka-mramorovana', name: 'Hlavačka mramorovaná', latin: 'Proterorhinus semilunaris', image: 'img/hlavacka-mramorovana.png',
+    color: '#6d4c41', colorLight: '#efebe9', colorText: '#3e2723',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Drobná bizarní rybka se srostlými břišními ploutvemi tvořícími přísavku.',
+    nastrahy: ['Není předmětem lovu'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Pobřežní zóna s kameny a rostlinami', zaznam: 'N/A',
+    hloubka: '0.1–1 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'hlavatka-podunajska', name: 'Hlavatka podunajská', latin: 'Hucho hucho', image: 'img/hlavatka-podunajska.png',
+    color: '#cd853f', colorLight: '#fff5ee', colorText: '#8b4513',
+    mira: 65, maxKg: 50, maxCm: 180, difficulty: 5,
+    popis: 'Největší evropská lososovitá ryba, vrcholový predátor podunajských řek.',
+    nastrahy: ['Velké woblery', 'Hlavatkové copy'],
+    sezona: [false, false, false, false, false, false, false, false, true, true, true, true],
+    habitat: 'Hluboké proudy velkých řek', zaznam: 'ČR: cca 115 cm',
+    hloubka: '1–4 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'horavka-duhova', name: 'Hořavka duhová', latin: 'Rhodeus amarus', image: 'img/horavka-duhova.png',
+    color: '#e066ff', colorLight: '#fdf5ff', colorText: '#6a0dad',
+    mira: 0, maxKg: 0.02, maxCm: 9, difficulty: 0,
+    popis: 'Drobná rybka kladoucí jikry do žaber živých škeblí a velevrubů.',
+    nastrahy: ['Chráněná'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Klidné vody s výskytem mlžů', zaznam: 'N/A',
+    hloubka: '0.3–1 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'hrouzek-beloploutvy', name: 'Hrouzek běloploutvý', latin: 'Romanogobio albipinnatus', image: 'img/hrouzek-beloploutvy.png',
+    color: '#dcdcdc', colorLight: '#ffffff', colorText: '#696969',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Menší a vzácnější druh hrouzka s velmi světlými ploutvemi.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Hlubší koryta řek (Morava, Dyje)', zaznam: 'N/A',
+    hloubka: '1–3 m', rychlost: 'Mírný proud'
+  },
+  {
+    id: 'hrouzek-dlouhovousy', name: 'Hrouzek dlouhovousý', latin: 'Romanogobio uranoscopus', image: 'img/hrouzek-dlouhovousy.png',
+    color: '#8b4513', colorLight: '#fdf5e6', colorText: '#4a250a',
+    mira: 0, maxKg: 0.05, maxCm: 11, difficulty: 0,
+    popis: 'Nejmenší hrouzek s nápadně dlouhými vousy, žijící v silném proudu.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Proudné úseky velkých řek', zaznam: 'N/A',
+    hloubka: '0.2–0.8 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'hrouzek-kessleruv', name: 'Hrouzek Kesslerův', latin: 'Romanogobio kesslerii', image: 'img/hrouzek-kessleruv.png',
+    color: '#a9a9a9', colorLight: '#f5f5f5', colorText: '#2f4f4f',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Vzácný druh hrouzka z povodí Dunaje. Kriticky ohrožený.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Řeka Bečva, štěrkové dno', zaznam: 'N/A',
+    hloubka: '0.2–0.6 m', rychlost: 'Velmi rychlá'
+  },
+  {
+    id: 'hrouzek-obecny', name: 'Hrouzek obecný', latin: 'Gobio gobio', image: 'img/hrouzek-obecny.png',
+    color: '#8b7355', colorLight: '#f9f5f0', colorText: '#4a3d2e',
+    mira: 0, maxKg: 0.15, maxCm: 25, difficulty: 1,
+    popis: 'Malá nenáročná rybka žijící u dna. Typický obyvatel písčitých mělčin.',
+    nastrahy: ['Drobní červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Písčité a kamenité úseky řek a rybníků', zaznam: '0,2 kg',
+    hloubka: '0.2–1 m', rychlost: 'Mírná i rychlá'
+  },
+  {
+    id: 'jelec-jesen', name: 'Jelec jesen', latin: 'Leuciscus idus', image: 'img/jelec-jesen.png',
+    color: '#95a5a6', colorLight: '#fdf2f2', colorText: '#c0392b',
+    mira: 25, maxKg: 4.5, maxCm: 60, difficulty: 4,
+    popis: 'Nejrobustnější zástupce našich jelců. Často se vyskytuje v okrasné zlaté formě.',
+    nastrahy: ['Hmyz', 'Drobné rotačky'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Větší řeky a tůně', zaznam: '4,8 kg',
+    hloubka: '1–3 m', rychlost: 'Mírný proud'
+  },
+  {
+    id: 'jelec-proudnik', name: 'Jelec proudnik', latin: 'Leuciscus leuciscus', image: 'img/jelec-proudnik.png',
+    color: '#bdc3c7', colorLight: '#f8f9f9', colorText: '#2c3e50',
+    mira: 0, maxKg: 1, maxCm: 37, difficulty: 3,
+    popis: 'Náš nejmenší jelec. Štíhlá ryba obývající čisté a kyslíkem bohaté vody.',
+    nastrahy: ['Drobné mušky', 'Červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Čisté řeky a potoky', zaznam: '1,1 kg',
+    hloubka: '0.3–1 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'jelec-tloust', name: 'Jelec tloušť', latin: 'Squalius cephalus', image: 'img/jelec-tloust.png',
+    color: '#5c4033', colorLight: '#f3efee', colorText: '#2e201a',
+    mira: 0, maxKg: 5, maxCm: 75, difficulty: 2,
+    popis: 'Tloušť je náš nejběžnější jelec. Extrémní všežravec s velmi širokou tlamou.',
+    nastrahy: ['Ovoce', 'Sýr', 'Hmyz', 'Přívlač'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Všechny typy tekoucích vod', zaznam: '5,5 kg',
+    hloubka: '0.5–2 m', rychlost: 'Střední proud'
+  },
+  {
+    id: 'jeseter-hladky', name: 'Jeseter hladký', latin: 'Acipenser nudiventris', image: 'img/jeseter-hladky.png',
+    color: '#4e5d6c', colorLight: '#f0f4f8', colorText: '#1a2b3c',
+    mira: 0, maxKg: 80, maxCm: 250, difficulty: 5,
+    popis: 'Velký druh jesetera vyskytující se vzácně v Dunaji. Má nedělený spodní pysk.',
+    nastrahy: ['Pelety', 'Rousnice'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Hluboká koryta velkých řek', zaznam: 'N/A',
+    hloubka: '2–10 m', rychlost: 'Proud'
+  },
+  {
+    id: 'jeseter-hvezdnaty', name: 'Jeseter hvězdnatý', latin: 'Acipenser stellatus', image: 'img/jeseter-hvezdnaty.png',
+    color: '#2c3e50', colorLight: '#ecf0f1', colorText: '#000000',
+    mira: 0, maxKg: 80, maxCm: 270, difficulty: 5,
+    popis: 'Velký štíhlý druh jesetera s velmi dlouhým rypcem. Vzácný host.',
+    nastrahy: ['Pelety'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Proudy velkých nížinných řek', zaznam: 'N/A',
+    hloubka: '2–8 m', rychlost: 'Proud'
+  },
+  {
+    id: 'jeseter-maly', name: 'Jeseter malý', latin: 'Acipenser ruthenus', image: 'img/jeseter-maly.png',
+    color: '#5d4037', colorLight: '#efebe9', colorText: '#2e1f1a',
+    mira: 45, maxKg: 16, maxCm: 125, difficulty: 4,
+    popis: 'Zvláštní starobylá ryba s rypcem a kostěnými štítky. Původní druh Dunaje a Moravy.',
+    nastrahy: ['Rousnice', 'Pelety'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Proudné úseky velkých řek', zaznam: 'N/A',
+    hloubka: '1–5 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'jeseter-rusky', name: 'Jeseter ruský', latin: 'Acipenser gueldenstaedtii', image: 'img/jeseter-rusky.png',
+    color: '#34495e', colorLight: '#f8f9fa', colorText: '#1c2833',
+    mira: 0, maxKg: 110, maxCm: 200, difficulty: 5,
+    popis: 'Velký druh jesetera vyskytující se v řekách východní Evropy. Často v soukromých revírech.',
+    nastrahy: ['Pelety'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Hluboké úseky řek a přehrad', zaznam: 'N/A',
+    hloubka: '3–10 m', rychlost: 'Mírný proud'
+  },
+  {
+    id: 'jeseter-sibirsky', name: 'Jeseter sibiřský', latin: 'Acipenser baerii', image: 'img/jeseter-sibirsky.png',
+    color: '#2e2e2e', colorLight: '#f2f2f2', colorText: '#000000',
+    mira: 0, maxKg: 200, maxCm: 300, difficulty: 5,
+    popis: 'Velký jeseter pocházející z východní části Ruska. Velmi častý v českých akvakulturách.',
+    nastrahy: ['Pelety', 'Rousnice'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Hluboké nádrže', zaznam: 'N/A',
+    hloubka: '2–15 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'jeseter-velky', name: 'Jeseter velký', latin: 'Acipenser sturio', image: 'img/jeseter-velky.png',
+    color: '#1a1a1a', colorLight: '#f0f0f0', colorText: '#000000',
+    mira: 0, maxKg: 400, maxCm: 350, difficulty: 5,
+    popis: 'Největší evropský druh jesetera, u nás kriticky ohrožený až vyhynulý v přírodě.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Velké řeky tekoucí do moře', zaznam: 'N/A',
+    hloubka: '5–20 m', rychlost: 'Proud'
+  },
+  {
+    id: 'jezidik-obecny', name: 'Ježdík obecný', latin: 'Gymnocephalus cernua', image: 'img/jezdik-obecny.png',
+    color: '#6d4c41', colorLight: '#efebe9', colorText: '#3e2723',
+    mira: 0, maxKg: 0.3, maxCm: 30, difficulty: 1,
+    popis: 'Drobná rybka podobná okounu. Má velmi pichlavé ploutve a slizkou kůži.',
+    nastrahy: ['Hnojáci'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Dna přehrad a hlubších řek', zaznam: '0,3 kg',
+    hloubka: '2–10 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'jezidik-zluty', name: 'Ježdík žlutý', latin: 'Gymnocephalus schraetser', image: 'img/jezdik-zluty.png',
+    color: '#fbc02d', colorLight: '#fff9c4', colorText: '#f57f17',
+    mira: 0, maxKg: 0.2, maxCm: 30, difficulty: 0,
+    popis: 'Drobnější okounovitá ryba s typickými podélnými tmavými pruhy na žlutém těle.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Řeky Morava a Dyje', zaznam: 'N/A',
+    hloubka: '1–4 m', rychlost: 'Proud'
+  },
+  {
+    id: 'kapr-obecny', name: 'Kapr obecný', latin: 'Cyprinus carpio', image: 'img/kapr-obecny.png',
+    color: '#1a5c3a', colorLight: '#e8f4ed', colorText: '#0d3d26',
+    mira: 45, maxKg: 40, maxCm: 110, difficulty: 2,
+    popis: 'Nejběžnější česká ryba a náš hlavní rybniční druh. Všežravec dna.',
+    nastrahy: ['Boilies', 'Kukuřice', 'Pelety', 'Rohlík'],
+    sezona: [true, true, false, false, true, true, true, true, true, true, true, true],
+    habitat: 'Rybníky, přehrady, nížinné řeky', zaznam: '34,5 kg',
+    hloubka: '1–5 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'kapr-lysec', name: 'Kapr obecný (lysec)', latin: 'Cyprinus carpio f. specularis', image: 'img/kapr-lysec.png',
+    color: '#3d2b1f', colorLight: '#f5f0e6', colorText: '#2a1a0a',
+    mira: 45, maxKg: 40, maxCm: 110, difficulty: 2,
+    popis: 'Forma kapra obecného charakteristická absencí šupin na většině těla. Má silnější kůži a je velmi oblíbený v kuchyni pro snadnou úpravu.',
+    nastrahy: ['Boilies', 'Kukuřice', 'Pelety', 'Rohlík', 'Tygří ořech'],
+    sezona: [true, true, false, false, true, true, true, true, true, true, true, true],
+    habitat: 'Rybníky, přehrady, pomalé úseky řek', zaznam: 'ČR: 32 kg',
+    hloubka: '1–5 m', rychlost: 'Pomalá voda',
+    tip: 'Lysci bývají v některých revírech opatrnější než šupináči. Zkuste lovit s plovoucím boilies (pop-up) kousek nade dnem.'
+  },
+  {
+    id: 'karas-obecny', name: 'Karas obecný', latin: 'Carassius carassius', image: 'img/karas-obecny.png',
+    color: '#cd7f32', colorLight: '#fdf5e6', colorText: '#8b4513',
+    mira: 0, maxKg: 3, maxCm: 45, difficulty: 3,
+    popis: 'Karas - nejodolnější a přitom dnes tak vzácná ryba. Původní druh ČR.',
+    nastrahy: ['Červi', 'Těsto'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Zarostlé tůně, slepá ramena', zaznam: '3,2 kg',
+    hloubka: '0.5–1.5 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'karas-stribrity', name: 'Karas stříbřitý', latin: 'Carassius gibelio', image: 'img/karas-stribrity.png',
+    color: '#b0bec5', colorLight: '#f0f4f5', colorText: '#37474f',
+    mira: 0, maxKg: 4, maxCm: 50, difficulty: 1,
+    popis: 'Nepůvodní druh karase. Extrémně expanzivní, vytlačuje původního karasa obecného.',
+    nastrahy: ['Všechno jedlé'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Všechny typy stojatých vod', zaznam: '3,5 kg',
+    hloubka: '0.5–3 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'koljuska-triostna', name: 'Koljuška tříostná', latin: 'Gasterosteus aculeatus', image: 'img/koljuska-triostna.png',
+    color: '#78909c', colorLight: '#eceff1', colorText: '#263238',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Drobná rybička s ostny na hřbetě. Samec staví hnízdo a hlídá jikry.',
+    nastrahy: ['Drobní živočichové'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Malé tůně a kanály', zaznam: 'N/A',
+    hloubka: '0.1–0.5 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'lin-obecny', name: 'Lín obecný', latin: 'Tinca tinca', image: 'img/lin-obecny.png',
+    color: '#4b5320', colorLight: '#f1f2eb', colorText: '#2d3314',
+    mira: 25, maxKg: 4, maxCm: 60, difficulty: 3,
+    popis: 'Elegán mezi kaprovitými rybami. Má krásné olivové zbarvení a červené oči.',
+    nastrahy: ['Rousnice', 'Hnojáci', 'Kukuřice'],
+    sezona: [false, false, false, false, true, true, true, true, true, false, false, false],
+    habitat: 'Zarostlé bahnité vody', zaznam: '3,8 kg',
+    hloubka: '0.5–1.5 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'lipan-podhorni', name: 'Lipan podhorní', latin: 'Thymallus thymallus', image: 'img/lipan-podhorni.png',
+    color: '#7a6a7a', colorLight: '#f4f0f4', colorText: '#3d353d',
+    mira: 30, maxKg: 2, maxCm: 55, difficulty: 4,
+    popis: 'Velmi osobitá lososovitá ryba s vysokou hřbetní ploutví.',
+    nastrahy: ['Suchá muška', 'Nymfa'],
+    sezona: [false, false, false, false, false, true, true, true, true, true, true, false],
+    habitat: 'Lipanové pásmo řek', zaznam: '1,8 kg',
+    hloubka: '0.5–1.2 m', rychlost: 'Středně rychlá'
+  },
+  {
+    id: 'losos-obecny', name: 'Losos obecný', latin: 'Salmo salar', image: 'img/losos-obecny.png',
+    color: '#4682b4', colorLight: '#f0f8ff', colorText: '#002366',
+    mira: 0, maxKg: 40, maxCm: 150, difficulty: 5,
+    popis: 'Velká ryba žijící v moři a vytírající se v řekách. V ČR se navrací do Labe.',
+    nastrahy: ['V ČR celoročně hájen'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Labské přítoky (Kamenice)', zaznam: 'N/A',
+    hloubka: '0.5–2 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'mnik-jednovousy', name: 'Mník jednovousý', latin: 'Lota lota', image: 'img/mnik-jednovousy.png',
+    color: '#5d4037', colorLight: '#efebe9', colorText: '#2e1f1a',
+    mira: 30, maxKg: 5, maxCm: 75, difficulty: 5,
+    popis: 'Jediná naše treskovitá ryba. Aktivní je především v zimě a za tmy.',
+    nastrahy: ['Rousnice', 'Mrtvá rybička'],
+    sezona: [true, true, false, false, false, false, false, false, false, false, true, true],
+    habitat: 'Hluboké tůně s kameny', zaznam: '4,5 kg',
+    hloubka: '2–10 m', rychlost: 'Tekoucí i stojatá'
+  },
+  {
+    id: 'mrenka-mramorovana', name: 'Mřenka mramorovaná', latin: 'Barbatula barbatula', image: 'img/mrenka-mramorovana.png',
+    color: '#8b7355', colorLight: '#fdf5e6', colorText: '#4a3d2e',
+    mira: 0, maxKg: 0.1, maxCm: 18, difficulty: 0,
+    popis: 'Drobnější sekavcovitá rybka s typickým mramorováním a šesti vousky.',
+    nastrahy: ['Drobní červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Mělké proudící úseky potoků', zaznam: 'N/A',
+    hloubka: '0.1–0.4 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'okoun-ricni', name: 'Okoun říční', latin: 'Perca fluviatilis', image: 'img/okoun-ricni.png',
+    color: '#556b2f', colorLight: '#f5f7f0', colorText: '#2a3517',
+    mira: 0, maxKg: 3, maxCm: 60, difficulty: 2,
+    popis: 'Menší dravá ryba s pruhy na bocích a výrazně červenými břišními ploutvemi.',
+    nastrahy: ['Třpytky', 'Twistery', 'Hnojáci'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Překážky, kořeny, mola', zaznam: '3,1 kg',
+    hloubka: '1–8 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'okounek-pstruhovy', name: 'Okounek pstruhový', latin: 'Micropterus salmoides', image: 'img/okounek-pstruhovy.png',
+    color: '#556b2f', colorLight: '#f0f4e8', colorText: '#2a3517',
+    mira: 0, maxKg: 10, maxCm: 75, difficulty: 4,
+    popis: 'Dravec původem ze Severní Ameriky. Má extrémně širokou tlamu a hluboký zářez v hřbetní ploutvi. Loví agresivně u hladiny i v rostlinách.',
+    nastrahy: ['Woblery', 'Poppery', 'Gumové nástrahy (žáby)', 'Třpytky'],
+    sezona: [false, false, false, false, true, true, true, true, true, true, false, false],
+    habitat: 'Teplejší stojaté vody, pískovny, zarostlé tůně', zaznam: 'ČR: cca 2-3 kg',
+    hloubka: '0.5–3 m', rychlost: 'Stojatá voda',
+    tip: 'Okounek miluje úkryty. Házejte nástrahu přímo do rákosí nebo mezi lekníny. Nejlepší zážitky nabízí lov "z hladiny" na poppery během letních večerů.'
+  },
+  {
+    id: 'ostroretka-stehovava', name: 'Ostroretka stěhovavá', latin: 'Chondrostoma nasus', image: 'img/ostroretka-stehovava.png',
+    color: '#7f8c8d', colorLight: '#f2f2f2', colorText: '#333333',
+    mira: 30, maxKg: 3, maxCm: 60, difficulty: 4,
+    popis: 'Vysoce atraktivní proudomilná ryba s tvrdou spodní hranou úst pro seškrabávání řas.',
+    nastrahy: ['Houska', 'Řasy', 'Larvy'],
+    sezona: [false, false, false, true, true, true, true, true, true, true, true, true],
+    habitat: 'Proudy řek s kamenitým dnem', zaznam: '3,2 kg',
+    hloubka: '0.5–1.5 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'ostrucha-krivocara', name: 'Ostrucha křivočará', latin: 'Pelecus cultratus', image: 'img/ostrucha-krivocara.png',
+    color: '#ecf0f1', colorLight: '#ffffff', colorText: '#34495e',
+    mira: 30, maxKg: 1, maxCm: 60, difficulty: 5,
+    popis: 'Zvláštní ryba žijící u hladiny. Má šavlovité tělo a křídlaté prsní ploutve.',
+    nastrahy: ['Hmyz', 'Drobné rybky'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Dolní toky velkých řek (Dunajské povodí)', zaznam: '1,2 kg',
+    hloubka: '0–1 m', rychlost: 'Mírný proud'
+  },
+  {
+    id: 'ouklej-obecna', name: 'Ouklej obecná', latin: 'Alburnus alburnus', image: 'img/ouklej-obecna.png',
+    color: '#ecf0f1', colorLight: '#ffffff', colorText: '#7f8c8d',
+    mira: 0, maxKg: 0.1, maxCm: 25, difficulty: 1,
+    popis: 'Typický zástupce rybí drobotiny. Stříbřitá rybka žijící v početných hejnech u hladiny.',
+    nastrahy: ['Houska', 'Drobní červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Všechny typy vod', zaznam: '0,2 kg',
+    hloubka: '0–0.5 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'ouklejka-pruhovana', name: 'Ouklejka pruhovaná', latin: 'Alburnoides bipunctatus', image: 'img/ouklejka-pruhovana.png',
+    color: '#bdc3c7', colorLight: '#f0f3f4', colorText: '#2c3e50',
+    mira: 0, maxKg: 0.1, maxCm: 15, difficulty: 0,
+    popis: 'Vzácnější druh oukleje obývající čisté proudy. Má dvojitou řadu černých teček.',
+    nastrahy: ['Chráněná'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Čisté proudné potoky', zaznam: 'N/A',
+    hloubka: '0.2–0.5 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'parma-obecna', name: 'Parma obecná', latin: 'Barbus barbus', image: 'img/parma-obecna.png',
+    color: '#8b4513', colorLight: '#f5eded', colorText: '#4a250a',
+    mira: 40, maxKg: 10, maxCm: 80, difficulty: 4,
+    popis: 'Bojovná ryba říčních proudů se čtyřmi vousy a rypcovitými ústy.',
+    nastrahy: ['Sýr', 'Rousnice', 'Pelety'],
+    sezona: [false, false, false, false, false, true, true, true, true, true, true, false],
+    habitat: 'Rychle tekoucí řeky', zaznam: '7,5 kg',
+    hloubka: '0.5–2 m', rychlost: 'Velmi rychlá'
+  },
+  {
+    id: 'perlin-ostrobrichy', name: 'Perlín ostrobřichý', latin: 'Scardinius erythrophthalmus', image: 'img/perlin-ostrobrichy.png',
+    color: '#d4af37', colorLight: '#fffdf0', colorText: '#5e4d1a',
+    mira: 0, maxKg: 2, maxCm: 45, difficulty: 2,
+    popis: 'Rybka žijící převážně v horních vrstvách vody. Má zlaté tělo a sytě rudé ploutve.',
+    nastrahy: ['Hmyz', 'Pečivo'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Stojaté vody s rostlinami', zaznam: '2,1 kg',
+    hloubka: '0–1 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'piskor-pruhovany', name: 'Piskoř pruhovaný', latin: 'Misgurnus fossilis', image: 'img/piskor-pruhovany.png',
+    color: '#4e342e', colorLight: '#d7ccc8', colorText: '#3e2723',
+    mira: 0, maxKg: 0.3, maxCm: 35, difficulty: 0,
+    popis: 'Ryba s největším počtem vousků u nás (10). Dokáže dýchat střevy a přežít v bahně.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Bahnité tůně a kanály', zaznam: 'N/A',
+    hloubka: '0.1–0.5 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'plotice-leskla', name: 'Plotice lesklá', latin: 'Rutilus pigus', image: 'img/plotice-leskla.png',
+    color: '#c0c0c0', colorLight: '#f8f8f8', colorText: '#333333',
+    mira: 0, maxKg: 2, maxCm: 50, difficulty: 4,
+    popis: 'Vzácný druh plotice s velmi světlým, stříbřitým tělem. Dunajské povodí.',
+    nastrahy: ['Pečivo', 'Červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Velké řeky (Morava, Dyje)', zaznam: 'N/A',
+    hloubka: '1–4 m', rychlost: 'Mírný proud'
+  },
+  {
+    id: 'plotice-obecna', name: 'Plotice obecná', latin: 'Rutilus rutilus', image: 'img/plotice-obecna.png',
+    color: '#95a5a6', colorLight: '#f2f5f5', colorText: '#2c3e50',
+    mira: 0, maxKg: 1.5, maxCm: 50, difficulty: 1,
+    popis: 'Nejhojnější "bílá ryba". Má červenou duhovku oka a stříbrné boky.',
+    nastrahy: ['Houska', 'Pšenice', 'Červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Téměř všechny vody', zaznam: '1,9 kg',
+    hloubka: '1–5 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'podoustev-ricni', name: 'Podoustev říční', latin: 'Vimba vimba', image: 'img/podoustev-ricni.png',
+    color: '#7f8c8d', colorLight: '#ecf0f1', colorText: '#2c3e50',
+    mira: 25, maxKg: 3, maxCm: 60, difficulty: 3,
+    popis: 'Silná ryba z proudnější vody s typickým masitým rypcem nad tlamou.',
+    nastrahy: ['Červi', 'Kukuřice'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Tekoucí vody nížinného typu', zaznam: '2,8 kg',
+    hloubka: '1–3 m', rychlost: 'Proud'
+  },
+  {
+    id: 'pstruh-duhovy', name: 'Pstruh americký duhový', latin: 'Oncorhynchus mykiss', image: 'img/pstruh-duhovy.png',
+    color: '#b0c4de', colorLight: '#f0f8ff', colorText: '#4682b4',
+    mira: 25, maxKg: 10, maxCm: 120, difficulty: 2,
+    popis: 'Severoamerická lososovitá ryba s duhovým pruhem na bocích.',
+    nastrahy: ['Rotačky', 'Pasty', 'Mušky'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Pstruhové revíry a nádrže', zaznam: '8,2 kg',
+    hloubka: '0.5–4 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'pstruh-obecny', name: 'Pstruh obecný', latin: 'Salmo trutta fario', image: 'img/pstruh-obecny.png',
+    color: '#8b7355', colorLight: '#f9f5f0', colorText: '#4a3d2e',
+    mira: 25, maxKg: 8, maxCm: 110, difficulty: 4,
+    popis: 'Nejznámnější zástupce lososovitých ryb s červenými tečkami na bocích.',
+    nastrahy: ['Umělé mušky', 'Drobné třpytky'],
+    sezona: [false, false, false, true, true, true, true, true, false, false, false, false],
+    habitat: 'Čisté horské potoky a řeky', zaznam: '8,5 kg',
+    hloubka: '0.2–1.5 m', rychlost: 'Velmi rychlá'
+  },
+  {
+    id: 'sekavcik-horsky', name: 'Sekaveck horský', latin: 'Sabanejewia balcanica', image: 'img/sekavec-horsky.png',
+    color: '#5d4037', colorLight: '#efebe9', colorText: '#2e1f1a',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Drobná vousatá ze stran zploštělá nepříliš hojná rybka podhorských řek.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Proudy s hrubým dnem', zaznam: 'N/A',
+    hloubka: '0.1–0.4 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'sekavec-podunajsky', name: 'Sekavec podunajský', latin: 'Cobitis elongatoides', image: 'img/sekavec-podunajsky.png',
+    color: '#a1887f', colorLight: '#f5f5f5', colorText: '#4e342e',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Drobná vousatá ze stran zploštělá rybka žijící v písčitém dně Dunajského povodí.',
+    nastrahy: ['Chráněný'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Stojaté a mírně tekoucí vody Moravy', zaznam: 'N/A',
+    hloubka: '0.2–0.5 m', rychlost: 'Klidná voda'
+  },
+  {
+    id: 'sih-marena', name: 'Síh maréna', latin: 'Coregonus maraena', image: 'img/sih-marena.png',
+    color: '#bdc3c7', colorLight: '#f8f9f9', colorText: '#2c3e50',
+    mira: 25, maxKg: 5, maxCm: 100, difficulty: 4,
+    popis: 'Lososovitá ryba ze severu. Má stříbrné tělo a velmi jemné bílé maso.',
+    nastrahy: ['Nymfy', 'Plankton'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Hluboké a čisté nádrže', zaznam: '4,5 kg',
+    hloubka: '5–30 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'sih-peled', name: 'Síh peleď', latin: 'Coregonus peled', image: 'img/sih-peled.png',
+    color: '#c0c0c0', colorLight: '#ffffff', colorText: '#2f4f4f',
+    mira: 25, maxKg: 3, maxCm: 60, difficulty: 4,
+    popis: 'Teplomilnější síh s vyšším tělem, dovezený ze Sibiře.',
+    nastrahy: ['Drobné nymfy'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Rybníky a údolní nádrže', zaznam: '3,2 kg',
+    hloubka: '2–10 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'siven-americky', name: 'Siven americký', latin: 'Salvelinus fontinalis', image: 'img/siven-americky.png',
+    color: '#556b2f', colorLight: '#fffafa', colorText: '#8b0000',
+    mira: 25, maxKg: 4, maxCm: 55, difficulty: 3,
+    popis: 'Menší lososovitá ryba z USA s mramorováním a bílým lemem ploutví.',
+    nastrahy: ['Mušky', 'Rotačky'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Chladné horské vody', zaznam: '3,5 kg',
+    hloubka: '0.2–2 m', rychlost: 'Rychlá voda'
+  },
+  {
+    id: 'slunecnice-pestra', name: 'Slunečnice pestrá', latin: 'Lepomis gibbosus', image: 'img/slunecnice-pestra.png',
+    color: '#fbc02d', colorLight: '#fff9c4', colorText: '#afb42b',
+    mira: 0, maxKg: 0.3, maxCm: 30, difficulty: 1,
+    popis: 'Drobná rybka z USA s pestrým zbarvením. Nežádoucí v přírodě.',
+    nastrahy: ['Malí červi'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Teplejší stojaté vody', zaznam: '0,4 kg',
+    hloubka: '0.2–1.5 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'slunka-obecna', name: 'Slunka obecná', latin: 'Leucaspius delineatus', image: 'img/slunka-obecna.png',
+    color: '#ecf0f1', colorLight: '#ffffff', colorText: '#7f8c8d',
+    mira: 0, maxKg: 0.02, maxCm: 10, difficulty: 0,
+    popis: 'Náš nejmenší druh ryby. Má velmi krátkou postranní čáru a žije v hejnech.',
+    nastrahy: ['Není předmětem lovu'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Tůně a zarostlé břehy rybníků', zaznam: 'N/A',
+    hloubka: '0–0.5 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'strevle-potocni', name: 'Střevle potoční', latin: 'Phoxinus phoxinus', image: 'img/strevle-potocni.png',
+    color: '#556b2f', colorLight: '#f0f5e6', colorText: '#2d3314',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 0,
+    popis: 'Krásná rybička pstruhových vod. Samci se v době tření pestře zbarvují.',
+    nastrahy: ['Chráněná'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Čisté pstruhové potoky', zaznam: 'N/A',
+    hloubka: '0.1–0.4 m', rychlost: 'Velmi rychlá'
+  },
+  {
+    id: 'strevlicka-vychodni', name: 'Střevlička východní', latin: 'Pseudorasbora parva', image: 'img/strevlicka-vychodni.png',
+    color: '#78909c', colorLight: '#eceff1', colorText: '#263238',
+    mira: 0, maxKg: 0.05, maxCm: 12, difficulty: 1,
+    popis: 'Nepůvodní, rychle se množící druh z Asie. Škodí požíráním jiker.',
+    nastrahy: ['Vše drobné'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Všechny stojaté vody', zaznam: 'N/A',
+    hloubka: '0–1 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'sumec-velky', name: 'Sumec velký', latin: 'Silurus glanis', image: 'img/sumec-velky.png',
+    color: '#2c2c2c', colorLight: '#f2f2f2', colorText: '#1a1a1a',
+    mira: 70, maxKg: 100, maxCm: 300, difficulty: 5,
+    popis: 'Naše největší dravá ryba. Noční dravec s dlouhými hmatovými vousy.',
+    nastrahy: ['Velká ryba', 'Pijavice', 'Rousnice'],
+    sezona: [false, false, false, false, false, true, true, true, true, true, true, false],
+    habitat: 'Hluboké jámy v přehradách a řekách', zaznam: '93 kg',
+    hloubka: '2–30 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'sumecek-americky', name: 'Sumeček americký', latin: 'Ameiurus nebulosus', image: 'img/sumecek-americky.png',
+    color: '#3e2723', colorLight: '#d7ccc8', colorText: '#1b0000',
+    mira: 0, maxKg: 1.5, maxCm: 50, difficulty: 1,
+    popis: 'Menší sumci podobná ryba z USA. Má 8 vousků a jedové trny v ploutvích.',
+    nastrahy: ['Žížaly', 'Kousek masa'],
+    sezona: [true, true, true, true, true, true, true, true, true, true, true, true],
+    habitat: 'Klidné a zabahněné vody', zaznam: '1,5 kg',
+    hloubka: '0.5–2 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'stika-obecna', name: 'Štika obecná', latin: 'Esox lucius', image: 'img/stika-obecna.png',
+    color: '#3e4d2a', colorLight: '#f0f4e8', colorText: '#222b17',
+    mira: 50, maxKg: 25, maxCm: 140, difficulty: 3,
+    popis: 'Naše nejznámější dravá ryba s protáhlým tělem a kachním zobákem plným zubů.',
+    nastrahy: ['Woblery', 'Třpytky', 'Rybičky'],
+    sezona: [true, false, false, false, false, true, true, true, true, true, true, true],
+    habitat: 'Břehy s rákosím a překážkami', zaznam: '27,2 kg',
+    hloubka: '0.5–5 m', rychlost: 'Jakákoliv'
+  },
+  {
+    id: 'tolstolobec-pestry', name: 'Tolstolobik pestrý', latin: 'Aristichthys nobilis', image: 'img/tolstolobik-pestry.png',
+    color: '#4f4f4f', colorLight: '#e0e0e0', colorText: '#1a1a1a',
+    mira: 0, maxKg: 50, maxCm: 130, difficulty: 5,
+    popis: 'Nepůvodní druh velké kaprovité ryby, která filtruje plankton.',
+    nastrahy: ['Technoplankton'],
+    sezona: [false, false, false, false, true, true, true, true, true, true, false, false],
+    habitat: 'Velké údolní nádrže', zaznam: '48 kg',
+    hloubka: '2–8 m', rychlost: 'Stojatá voda'
+  },
+  {
+    id: 'tolstolobik-bily', name: 'Tolstolobik bílý', latin: 'Hypophthalmichthys molitrix', image: 'img/tolstolobik-bily.png',
+    color: '#dcdcdc', colorLight: '#f8f8f8', colorText: '#696969',
+    mira: 0, maxKg: 40, maxCm: 110, difficulty: 5,
+    popis: 'Další velká ryba z východu, požírá rostlinný plankton. Často skáče nad hladinu.',
+    nastrahy: ['Plankton'],
+    sezona: [false, false, false, false, true, true, true, true, true, true, false, false],
+    habitat: 'Dolní toky řek a přehrady', zaznam: '35 kg',
+    hloubka: '1–4 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'uhor-ricni', name: 'Úhoř říční', latin: 'Anguilla anguilla', image: 'img/uhor-ricni.png',
+    color: '#3d3d2e', colorLight: '#f5f5f0', colorText: '#1f1f17',
+    mira: 50, maxKg: 5, maxCm: 150, difficulty: 4,
+    popis: 'Dravá ryba s hadovitým tělem. Tře se v Sargasovém moři, poté migruje do řek.',
+    nastrahy: ['Rousnice', 'Mrtvá rybička'],
+    sezona: [false, false, false, true, true, true, true, true, true, false, false, false],
+    habitat: 'Dno v bahně nebo kamenných záhozech', zaznam: '4,2 kg',
+    hloubka: '1–6 m', rychlost: 'Pomalá voda'
+  },
+  {
+    id: 'vranka-obecna', name: 'Vranka obecná', latin: 'Cottus gobio', image: 'img/vranka-obecna.png',
+    color: '#5d4037', colorLight: '#f5f1f0', colorText: '#2e1f1a',
+    mira: 0, maxKg: 0.1, maxCm: 15, difficulty: 0,
+    popis: 'Drobná rybka ze dna čistých řek. Nemá plynový měchýř, pohybuje se přískoky.',
+    nastrahy: ['Chráněná'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Pstruhové potoky pod kameny', zaznam: 'N/A',
+    hloubka: '0.1–0.4 m', rychlost: 'Velmi rychlá'
+  },
+  {
+    id: 'vranka-pruhoploutva', name: 'Vranka pruhoploutvá', latin: 'Cottus poecilopus', image: 'img/vranka-pruhoploutva.png',
+    color: '#4e342e', colorLight: '#fbe9e7', colorText: '#3e2723',
+    mira: 0, maxKg: 0.1, maxCm: 20, difficulty: 0,
+    popis: 'Drobná bizarní rybka s příčnými pruhy na břišních ploutvích.',
+    nastrahy: ['Chráněná'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Horské bystřiny', zaznam: 'N/A',
+    hloubka: '0.1–0.3 m', rychlost: 'Extrémně rychlá'
+  },
+  {
+    id: 'vyza-velka', name: 'Vyza velká', latin: 'Huso huso', image: 'img/vyza-velka.png',
+    color: '#1c2833', colorLight: '#d5d8dc', colorText: '#000000',
+    mira: 0, maxKg: 1000, maxCm: 850, difficulty: 5,
+    popis: 'Největší jeseterovitá ryba a sladkovodní ryba vůbec. Do ČR připlouvala vzácně z Dunaje.',
+    nastrahy: ['U nás celoročně hájená'],
+    sezona: [false, false, false, false, false, false, false, false, false, false, false, false],
+    habitat: 'Koryto Dunaje (vzácně Morava)', zaznam: 'V ČR nevylovena',
+    hloubka: '5–30 m', rychlost: 'Proud'
+  }
+]
+
+
+// MOCK DATA
+const DB = {
+  users: [
+    { id: 1, name: 'Matěj Šmelko', email: 'matej@example.com', password: 'rybar123', role: 'Rybář' },
+    { id: 2, name: 'Jan Novák', email: 'jan@example.com', password: 'rybar123', role: 'Správce revíru' },
+    { id: 3, name: 'Pavel Horák', email: 'pavel@example.com', password: 'rybar123', role: 'Rybář' },
+  ],
+  catches: [
+    { id: 1, userId: 1, species: 'Kapr', weightG: 3200, lengthCm: 58, revir: 'Revír Ostravice č. 1', bait: 'Kukuřice', note: 'Krásný kus u jezu', date: '2025-04-18', time: '07:32' },
+    { id: 2, userId: 1, species: 'Štika', weightG: 1850, lengthCm: 72, revir: 'Revír Odra – Svinov', bait: 'Wobler', note: '', date: '2025-04-10', time: '14:15' },
+    { id: 3, userId: 1, species: 'Pstruh', weightG: 620, lengthCm: 35, revir: 'Revír Bečva – Přerov', bait: 'Muškaření', note: 'Uloveno a puštěno zpět', date: '2025-03-28', time: '09:05' },
+    { id: 4, userId: 3, species: 'Candát', weightG: 2100, lengthCm: 65, revir: 'Přehrada Slezská Harta', bait: 'Gumová nástraha', note: '', date: '2025-04-15', time: '18:45' },
+  ],
+  posts: [
+    { id: 1, userId: 2, category: 'Tipy', title: 'Nejlepší místa na Ostravici pro jarní kaprování', body: 'Po zimě se kapři začínají aktivovat. Doporučuji oblast u jezu v Ostravě-Muglinově, kde se ryby shlukují v teplé vodě pod jezem. Nejlepší záběr je ráno mezi 6-9 hodinou.', likes: 12, date: '2025-04-20' },
+    { id: 2, userId: 3, category: 'Úlovky', title: 'Největší štika sezóny – 4,8 kg z Odry!', body: 'Konečně se povedlo! Po třech hodinách čekání se mi povedlo vytáhnout krásnou štiku přes 70 cm. Nahazoval jsem wobler u zatopených keřů na levém břehu Odry.', likes: 28, date: '2025-04-17' },
+    { id: 3, userId: 1, category: 'Vybavení', title: 'Recenze: Prut Shimano Catana 3m – stojí za to?', body: 'Koupil jsem si loni na jaře a po roce používání mohu říct – stojí za to. Výborný poměr cena/výkon pro začátečníky i mírně pokročilé. Jediná nevýhoda je trochu tužší špička.', likes: 7, date: '2025-04-12' },
+    { id: 4, userId: 2, category: 'Diskuse', title: 'Zavedení elektronické povolenky v roce 2026 – vaše názory?', body: 'ČRS oznámil spuštění elektronické povolenky. Jak se na to díváte? Myslím, že digitalizace je správný krok, ale obávám se, že starší rybáři budou mít problémy.', likes: 19, date: '2025-04-08' },
+  ],
+  comments: [
+    { id: 1, postId: 2, userId: 1, body: 'Gratuluji! To je pěkný kus. Já tam byl minulý víkend, ale nic pořádného jsem nevytáhl.', date: '2025-04-17' },
+    { id: 2, postId: 2, userId: 2, body: 'Wobler je na Odru fakt skvělá volba na jaře. Jakou barvu jsi použil?', date: '2025-04-18' },
+    { id: 3, postId: 4, userId: 3, body: 'Souhlasím s obavou o starší rybáře. Měli by zachovat i papírovou variantu aspoň pár let.', date: '2025-04-09' },
+  ],
+};
+let nextId = { catch: 5, post: 5, comment: 4 };
+let likedPosts = new Set();
+
+// STATE
+let state = {
+  loggedUser: null,
+  screen: 'login',
+  tab: 'catches',
+  modal: null,
+  modalData: null,
+  toast: null,
+  catchFilter: 'Vše',
+  forumFilter: 'Vše',
+  encycSearch: '',
+  encycFish: null,
+};
+
+function setState(updates) {
+  Object.assign(state, updates);
+  render();
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+// AUTH
+function login(email, password) {
+  const user = DB.users.find(u => u.email === email && u.password === password);
+  if (!user) return false;
+  setState({ loggedUser: user, screen: 'main', tab: 'catches' });
+  return true;
+}
+
+function register(name, email, password) {
+  if (DB.users.find(u => u.email === email)) return false;
+  const user = { id: DB.users.length + 1, name, email, password, role: 'Rybář' };
+  DB.users.push(user);
+  setState({ loggedUser: user, screen: 'main', tab: 'catches' });
+  return true;
+}
+
+function logout() {
+  setState({ loggedUser: null, screen: 'login' });
+}
+
+// CATCHES
+function getUserCatches() {
+  return DB.catches.filter(c => c.userId === state.loggedUser.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+function addCatch(data) {
+  const c = { id: nextId.catch++, userId: state.loggedUser.id, ...data };
+  DB.catches.push(c);
+  showToast('Úlovek byl zaznamenán ✓');
+  setState({ modal: null });
+}
+
+// POSTS
+function getPosts() {
+  return [...DB.posts].sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+function addPost(data) {
+  const p = { id: nextId.post++, userId: state.loggedUser.id, likes: 0, date: new Date().toISOString().slice(0,10), ...data };
+  DB.posts.push(p);
+  showToast('Příspěvek byl přidán ✓');
+  setState({ modal: null });
+}
+
+function addComment(postId, body) {
+  const c = { id: nextId.comment++, postId, userId: state.loggedUser.id, body, date: new Date().toISOString().slice(0,10) };
+  DB.comments.push(c);
+  render();
+}
+
+function toggleLike(postId) {
+  const post = DB.posts.find(p => p.id === postId);
+  if (!post) return;
+  if (likedPosts.has(postId)) { post.likes--; likedPosts.delete(postId); }
+  else { post.likes++; likedPosts.add(postId); }
+  render();
+}
+
+// HELPERS
+function getUserById(id) { return DB.users.find(u => u.id === id) || { name: 'Neznámý', email: '' }; }
+function getInitials(name) { return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2); }
+function formatDate(d) {
+  const date = new Date(d);
+  return date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function tagClass(cat) {
+  return { 'Tipy': 'tag-tip', 'Úlovky': 'tag-catch', 'Vybavení': 'tag-gear', 'Diskuse': 'tag-disc' }[cat] || 'tag-disc';
+}
+function fishEmoji(species) { return FISH_EMOJI[species] || '🐟'; }
+function fmtWeight(g) { return g >= 1000 ? (g/1000).toFixed(2) + ' kg' : g + ' g'; }
+
+// RENDER
+function render() {
+  const app = document.getElementById('app');
+  if (state.screen === 'login') { app.innerHTML = renderAuth(); attachAuth(); return; }
+  app.innerHTML = renderMain();
+  attachMain();
+}
+
+function renderAuth() {
+  return `
+  <div class="auth-screen">
+    <div class="auth-logo">Rybář<span>App</span></div>
+    <div class="auth-sub">Evidence úlovků a rybářská komunita</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Přihlášení</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Registrace</button>
+    </div>
+    <div id="auth-form-login">
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" id="login-email" type="email" placeholder="vaše@email.cz" value="matej@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heslo</label>
+        <input class="form-input" id="login-password" type="password" placeholder="••••••••" value="rybar123">
+      </div>
+      <div id="login-error" class="form-error" style="margin-bottom:12px;display:none">Nesprávný e-mail nebo heslo</div>
+      <button class="btn btn-primary" onclick="doLogin()">Přihlásit se</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text3)">
+        Demo účet: matej@example.com / rybar123
+      </div>
+    </div>
+    <div id="auth-form-register" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Jméno a příjmení</label>
+        <input class="form-input" id="reg-name" type="text" placeholder="Jan Novák">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" id="reg-email" type="email" placeholder="vaše@email.cz">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heslo</label>
+        <input class="form-input" id="reg-password" type="password" placeholder="min. 8 znaků">
+      </div>
+      <div id="reg-error" class="form-error" style="margin-bottom:12px;display:none">E-mail je již registrován</div>
+      <button class="btn btn-primary" onclick="doRegister()">Vytvořit účet</button>
+    </div>
+  </div>`;
+}
+
+let currentAuthTab = 'login';
+function switchAuthTab(tab) {
+  currentAuthTab = tab;
+  document.getElementById('tab-login').className = 'auth-tab' + (tab === 'login' ? ' active' : '');
+  document.getElementById('tab-register').className = 'auth-tab' + (tab === 'register' ? ' active' : '');
+  document.getElementById('auth-form-login').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('auth-form-register').style.display = tab === 'register' ? '' : 'none';
+}
+
+function attachAuth() {}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-password').value;
+  if (!login(email, pw)) {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pw = document.getElementById('reg-password').value;
+  if (!name || !email || pw.length < 6) { showToast('Vyplňte všechna pole'); return; }
+  if (!register(name, email, pw)) {
+    document.getElementById('reg-error').style.display = 'block';
+  }
+}
+
+function renderMain() {
+  const user = state.loggedUser;
+  let content = '';
+  if (state.modal === 'addCatch') content = renderAddCatchModal();
+  else if (state.modal === 'addPost') content = renderAddPostModal();
+  else if (state.modal === 'catchDetail') content = renderCatchDetail();
+  else if (state.modal === 'postDetail') content = renderPostDetail();
+
+  let tabContent = '';
+  if (state.tab === 'catches') tabContent = renderCatches();
+  else if (state.tab === 'forum') tabContent = renderForum();
+  else if (state.tab === 'encyc') tabContent = renderEncyc();
+  else if (state.tab === 'profile') tabContent = renderProfile();
+
+  return `
+  <div class="topbar">
+    <div class="topbar-title">Rybář<span>App</span></div>
+    <div class="topbar-user">
+      <span style="font-size:13px;color:var(--text2)">${user.name.split(' ')[0]}</span>
+      <div class="avatar" title="Profil">${getInitials(user.name)}</div>
+    </div>
+  </div>
+  <div class="content" id="main-content">
+    ${tabContent}
+  </div>
+  <div class="bottomnav">
+    <button class="nav-btn ${state.tab==='catches'?'active':''}" onclick="setState({tab:'catches',modal:null})">
+      <span class="nav-icon">🎣</span>Úlovky
+    </button>
+    <button class="nav-btn ${state.tab==='forum'?'active':''}" onclick="setState({tab:'forum',modal:null})">
+      <span class="nav-icon">💬</span>Fórum
+    </button>
+    <button class="nav-btn ${state.tab==='encyc'?'active':''}" onclick="setState({tab:'encyc',modal:null,encycFish:null})">
+      <span class="nav-icon">📖</span>Ryby
+    </button>
+    <button class="nav-btn ${state.tab==='profile'?'active':''}" onclick="setState({tab:'profile',modal:null})">
+      <span class="nav-icon">👤</span>Profil
+    </button>
+  </div>
+  ${content}`;
+}
+
+function renderCatches() {
+  const catches = getUserCatches();
+  const totalWeight = catches.reduce((s, c) => s + c.weightG, 0);
+  const filters = ['Vše', ...FISH_SPECIES.filter(s => catches.find(c => c.species === s))];
+  const filtered = state.catchFilter === 'Vše' ? catches : catches.filter(c => c.species === state.catchFilter);
+
+  return `
+  <div class="section-header">
+    <div class="section-title">Moje úlovky</div>
+    <button class="btn btn-primary btn-sm" onclick="setState({modal:'addCatch'})">+ Přidat</button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">${catches.length}</div><div class="stat-lbl">Celkem</div></div>
+    <div class="stat-card"><div class="stat-val">${fmtWeight(totalWeight)}</div><div class="stat-lbl">Celková váha</div></div>
+    <div class="stat-card"><div class="stat-val">${catches.length ? fmtWeight(Math.max(...catches.map(c=>c.weightG))) : '–'}</div><div class="stat-lbl">Největší</div></div>
+  </div>
+  <div class="chip-row">
+    ${filters.map(f => `<div class="chip ${state.catchFilter===f?'active':''}" onclick="setState({catchFilter:'${f}'})">${f}</div>`).join('')}
+  </div>
+  ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-icon">🎣</div><div class="empty-text">Zatím žádné úlovky</div><div class="empty-sub">Přidejte svůj první úlovek</div></div>` :
+    filtered.map(c => `
+    <div class="catch-card" onclick="setState({modal:'catchDetail',modalData:${c.id}})">
+      <div class="catch-icon">${fishEmoji(c.species)}</div>
+      <div class="catch-info">
+        <div class="catch-species">${c.species}</div>
+        <div class="catch-meta">${c.revir} · ${formatDate(c.date)}</div>
+        ${c.note ? `<div class="catch-detail">"${c.note}"</div>` : ''}
+      </div>
+      <div class="catch-badge">${fmtWeight(c.weightG)}</div>
+    </div>`).join('')}`;
+}
+
+function renderForum() {
+  const posts = getPosts();
+  const cats = ['Vše', ...FORUM_CATS];
+  const filtered = state.forumFilter === 'Vše' ? posts : posts.filter(p => p.category === state.forumFilter);
+
+  return `
+  <div class="section-header">
+    <div class="section-title">Fórum</div>
+    <button class="btn btn-primary btn-sm" onclick="setState({modal:'addPost'})">+ Příspěvek</button>
+  </div>
+  <div class="chip-row">
+    ${cats.map(c => `<div class="chip ${state.forumFilter===c?'active':''}" onclick="setState({forumFilter:'${c}'})">${c}</div>`).join('')}
+  </div>
+  ${filtered.map(p => {
+    const author = getUserById(p.userId);
+    const commentCount = DB.comments.filter(c => c.postId === p.id).length;
+    return `
+    <div class="forum-card" onclick="setState({modal:'postDetail',modalData:${p.id}})">
+      <div class="forum-header">
+        <div class="forum-avatar">${getInitials(author.name)}</div>
+        <div><div class="forum-author">${author.name}</div><div class="forum-date">${formatDate(p.date)}</div></div>
+        <span class="forum-tag ${tagClass(p.category)}" style="margin-left:auto">${p.category}</span>
+      </div>
+      <div class="forum-title">${p.title}</div>
+      <div class="forum-body">${p.body.length > 120 ? p.body.slice(0,120)+'…' : p.body}</div>
+      <div class="forum-footer">
+        <div class="forum-likes" onclick="event.stopPropagation();toggleLike(${p.id})">
+          ${likedPosts.has(p.id) ? '❤️' : '🤍'} ${p.likes}
+        </div>
+        <div class="forum-comments">💬 ${commentCount}</div>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function renderProfile() {
+  const user = state.loggedUser;
+  const catches = getUserCatches();
+  const posts = DB.posts.filter(p => p.userId === user.id);
+  const species = [...new Set(catches.map(c => c.species))];
+
+  return `
+  <div class="profile-hero">
+    <div class="profile-avatar-big">${getInitials(user.name)}</div>
+    <div>
+      <div class="profile-name">${user.name}</div>
+      <div class="profile-email">${user.email}</div>
+      <div class="profile-role">${user.role}</div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">${catches.length}</div><div class="stat-lbl">Úlovků</div></div>
+    <div class="stat-card"><div class="stat-val">${posts.length}</div><div class="stat-lbl">Příspěvků</div></div>
+    <div class="stat-card"><div class="stat-val">${species.length}</div><div class="stat-lbl">Druhů</div></div>
+  </div>
+  <div style="background:var(--surface2);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">NASTAVENÍ ÚČTU</div>
+    <div class="list-item"><span class="list-item-icon">👤</span><span class="list-item-label">Jméno</span><span class="list-item-value">${user.name}</span></div>
+    <div class="list-item"><span class="list-item-icon">✉️</span><span class="list-item-label">E-mail</span><span class="list-item-value">${user.email}</span></div>
+    <div class="list-item"><span class="list-item-icon">🏆</span><span class="list-item-label">Role</span><span class="list-item-value">${user.role}</span></div>
+  </div>
+  <button class="btn btn-danger" onclick="logout()">Odhlásit se</button>`;
+}
+
+function renderCatchDetail() {
+  const c = DB.catches.find(c => c.id === state.modalData);
+  if (!c) return '';
+  return `<div class="modal-overlay" onclick="if(event.target===this)setState({modal:null})">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="back-btn" onclick="setState({modal:null})">← Zpět</button>
+    <div class="detail-header">
+      <div class="detail-fish-icon">${fishEmoji(c.species)}</div>
+      <div class="detail-title">${c.species}</div>
+      <div class="detail-sub">${formatDate(c.date)} v ${c.time}</div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-field"><div class="detail-field-label">Váha</div><div class="detail-field-value">${fmtWeight(c.weightG)}</div></div>
+      <div class="detail-field"><div class="detail-field-label">Délka</div><div class="detail-field-value">${c.lengthCm} cm</div></div>
+      <div class="detail-field"><div class="detail-field-label">Nástraha</div><div class="detail-field-value">${c.bait}</div></div>
+      <div class="detail-field"><div class="detail-field-label">Čas</div><div class="detail-field-value">${c.time}</div></div>
+    </div>
+    <div class="detail-field" style="border-radius:10px;background:var(--surface2);padding:12px;margin-bottom:16px">
+      <div class="detail-field-label">Revír</div>
+      <div class="detail-field-value">${c.revir}</div>
+    </div>
+    ${c.note ? `<div class="detail-field" style="border-radius:10px;background:var(--surface2);padding:12px">
+      <div class="detail-field-label">Poznámka</div>
+      <div class="detail-field-value">${c.note}</div>
+    </div>` : ''}
+  </div></div>`;
+}
+
+function renderPostDetail() {
+  const p = DB.posts.find(p => p.id === state.modalData);
+  if (!p) return '';
+  const author = getUserById(p.userId);
+  const comments = DB.comments.filter(c => c.postId === p.id);
+  return `<div class="modal-overlay" onclick="if(event.target===this)setState({modal:null})">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="back-btn" onclick="setState({modal:null})">← Zpět</button>
+    <div class="forum-header" style="margin-bottom:12px">
+      <div class="forum-avatar">${getInitials(author.name)}</div>
+      <div><div class="forum-author">${author.name}</div><div class="forum-date">${formatDate(p.date)}</div></div>
+      <span class="forum-tag ${tagClass(p.category)}" style="margin-left:auto">${p.category}</span>
+    </div>
+    <div class="forum-title" style="font-size:18px;margin-bottom:12px">${p.title}</div>
+    <div class="forum-body" style="font-size:14px;line-height:1.7">${p.body}</div>
+    <div class="forum-footer" style="margin-bottom:20px">
+      <div class="forum-likes" onclick="toggleLike(${p.id})">${likedPosts.has(p.id)?'❤️':'🤍'} ${p.likes} líbí se</div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:12px">Komentáře (${comments.length})</div>
+    ${comments.length === 0 ? '<div style="color:var(--text3);font-size:13px;margin-bottom:16px">Zatím žádné komentáře</div>' :
+      comments.map(c => {
+        const u = getUserById(c.userId);
+        return `<div class="comment">
+          <div class="comment-avatar">${getInitials(u.name)}</div>
+          <div><div class="comment-body">${c.body}</div><div class="comment-meta">${u.name} · ${formatDate(c.date)}</div></div>
+        </div>`;
+      }).join('')}
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input class="form-input" id="new-comment" placeholder="Přidat komentář…" style="flex:1">
+      <button class="btn btn-primary btn-sm" onclick="submitComment(${p.id})">Odeslat</button>
+    </div>
+  </div></div>`;
+}
+
+function submitComment(postId) {
+  const input = document.getElementById('new-comment');
+  const body = input.value.trim();
+  if (!body) return;
+  addComment(postId, body);
+  showToast('Komentář přidán ✓');
+}
+
+function renderAddCatchModal() {
+  return `<div class="modal-overlay" onclick="if(event.target===this)setState({modal:null})">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Zaznamenat úlovek</div>
+    <div class="form-group">
+      <label class="form-label">Druh ryby *</label>
+      <select class="select-input" id="c-species">
+        ${FISH_SPECIES.map(s => `<option>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Váha (g) *</label>
+        <input class="form-input" id="c-weight" type="number" placeholder="3200" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Délka (cm)</label>
+        <input class="form-input" id="c-length" type="number" placeholder="58" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Revír *</label>
+      <select class="select-input" id="c-revir">
+        ${REVIRY.map(r => `<option>${r}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Datum *</label>
+        <input class="form-input" id="c-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Čas</label>
+        <input class="form-input" id="c-time" type="time" value="${new Date().toTimeString().slice(0,5)}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nástraha</label>
+      <input class="form-input" id="c-bait" type="text" placeholder="Kukuřice, wobler…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Poznámka</label>
+      <textarea class="form-input" id="c-note" placeholder="Volitelná poznámka…"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-secondary" style="flex:1" onclick="setState({modal:null})">Zrušit</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitCatch()">Zaznamenat úlovek</button>
+    </div>
+  </div></div>`;
+}
+
+function submitCatch() {
+  const species = document.getElementById('c-species').value;
+  const weightG = parseInt(document.getElementById('c-weight').value);
+  const lengthCm = parseInt(document.getElementById('c-length').value) || 0;
+  const revir = document.getElementById('c-revir').value;
+  const date = document.getElementById('c-date').value;
+  const time = document.getElementById('c-time').value || '00:00';
+  const bait = document.getElementById('c-bait').value.trim();
+  const note = document.getElementById('c-note').value.trim();
+  if (!weightG || weightG < 1) { showToast('Zadejte váhu úlovku'); return; }
+  if (!date) { showToast('Zadejte datum'); return; }
+  addCatch({ species, weightG, lengthCm, revir, date, time, bait: bait || 'Neuvedeno', note });
+}
+
+function renderAddPostModal() {
+  return `<div class="modal-overlay" onclick="if(event.target===this)setState({modal:null})">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nový příspěvek</div>
+    <div class="form-group">
+      <label class="form-label">Kategorie</label>
+      <select class="select-input" id="p-category">
+        ${FORUM_CATS.map(c => `<option>${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nadpis *</label>
+      <input class="form-input" id="p-title" type="text" placeholder="O čem chcete psát?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Text příspěvku *</label>
+      <textarea class="form-input" id="p-body" style="min-height:120px" placeholder="Napište svůj příspěvek…"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-secondary" style="flex:1" onclick="setState({modal:null})">Zrušit</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitPost()">Přidat příspěvek</button>
+    </div>
+  </div></div>`;
+}
+
+function submitPost() {
+  const category = document.getElementById('p-category').value;
+  const title = document.getElementById('p-title').value.trim();
+  const body = document.getElementById('p-body').value.trim();
+  if (!title || !body) { showToast('Vyplňte nadpis i text'); return; }
+  addPost({ category, title, body });
+}
+
+function renderEncyc() {
+  if (state.encycFish) return renderFishDetail(state.encycFish);
+
+  const q = state.encycSearch.toLowerCase().trim();
+  const filtered = FISH_DB.filter(f =>
+    !q || f.name.toLowerCase().includes(q) || f.latin.toLowerCase().includes(q)
+  );
+
+  const MONTHS = ['L','Ú','B','D','K','Č','S','S','Z','Ř','L','P'];
+
+  function diffDots(n, color) {
+    return Array.from({length: 5}, (_,i) =>
+      `<div class="diff-dot" style="background:${i < n ? color : 'var(--border)'}"></div>`
+    ).join('');
+  }
+
+  return `
+  <div class="section-header">
+    <div class="section-title">Encyklopedie ryb</div>
+    <span style="font-size:12px;color:var(--text3)">${filtered.length} druhů</span>
+  </div>
+  <div class="encyc-search">
+    <span style="font-size:16px">🔍</span>
+    <input placeholder="Hledat rybu…" value="${state.encycSearch}"
+      oninput="state.encycSearch=this.value;render()" id="encyc-input">
+  </div>
+  <div class="fish-grid">
+    ${filtered.map(f => `
+    <div class="fish-card" onclick="setState({encycFish:'${f.id}'})">
+      <div class="fish-card-top" style="background:${f.colorLight}">
+        <div class="fish-image-big"><img src="${f.image}" alt="${f.name}" style="width: 100%; height: 100%; object-fit: contain;"></div>
+        <div class="fish-card-name" style="color:${f.colorText}">${f.name}</div>
+        <div class="fish-card-latin" style="color:${f.colorText}">${f.latin}</div>
+      </div>
+      <div class="fish-card-bottom">
+        <div class="fish-mira-badge" style="background:${f.colorLight};color:${f.colorText}">
+          ${f.id === 'jeseter' ? 'CHRÁNĚNÁ' : `MÍR: ${f.mira} cm`}
+        </div>
+        <div class="fish-difficulty" title="Obtížnost lovu">
+          ${diffDots(f.difficulty, f.color)}
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>
+  ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Ryba nenalezena</div></div>` : ''}
+  `;
+}
+
+function renderFishDetail(fishId) {
+  const f = FISH_DB.find(x => x.id === fishId);
+  if (!f) return '';
+  const MONTHS_LABELS = ['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro'];
+
+  function diffDots(n, color) {
+    return Array.from({length: 5}, (_,i) =>
+      `<div class="diff-dot" style="background:${i < n ? color : 'var(--border)'};width:9px;height:9px"></div>`
+    ).join('');
+  }
+
+  return `
+  <button class="back-btn" onclick="setState({encycFish:null})">← Zpět na seznam</button>
+
+  <div class="fish-detail-hero" style="background:${f.colorLight}">
+    <div class="fish-detail-image">
+      <img src="${f.image}" alt="${f.name}" style="width: 100%; max-height: 200px; object-fit: contain;">
+    </div>
+    <div class="fish-detail-name" style="color:${f.colorText}">${f.name}</div>
+    <div class="fish-detail-latin" style="color:${f.colorText}">${f.latin}</div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Základní údaje</div>
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-box-label">Zákonná míra</div>
+        <div class="info-box-val" style="color:${f.id==='jeseter'?'var(--danger)':f.color}">
+          ${f.id === 'jeseter' ? '⚠️ Chráněná' : f.mira + ' cm'}
+        </div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Max. hmotnost</div>
+        <div class="info-box-val">až ${f.maxKg} kg</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Max. délka</div>
+        <div class="info-box-val">až ${f.maxCm} cm</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Obtížnost lovu</div>
+        <div class="fish-difficulty" style="margin-top:4px">${diffDots(f.difficulty, f.color)}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Hloubka</div>
+        <div class="info-box-val" style="font-size:12px">${f.hloubka}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Proud</div>
+        <div class="info-box-val" style="font-size:12px">${f.rychlost}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Popis</div>
+    <div style="font-size:14px;line-height:1.7;color:var(--text2)">${f.popis}</div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Stanoviště</div>
+    <div style="font-size:14px;color:var(--text2)">${f.habitat}</div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Doporučené nástrahy</div>
+    <div class="bait-list">
+      ${f.nastrahy.map(n => `<div class="bait-chip" style="background:${f.colorLight};color:${f.colorText}">${n}</div>`).join('')}
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Lovná sezóna</div>
+    <div class="season-bar">
+      ${f.sezona.map((active, i) => `
+        <div class="season-month ${active ? 'active' : 'closed'}"
+          style="${active ? `background:${f.color}` : ''}">
+          ${MONTHS_LABELS[i].slice(0,1)}
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--text3)">
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:2px;background:${f.color};display:inline-block"></span> Lovná doba
+      </span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:2px;background:var(--surface2);border:1px solid var(--border);display:inline-block"></span> Hájení
+      </span>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Rekord</div>
+    <div style="font-size:14px;color:var(--text2)">🏆 ${f.zaznam}</div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-title">Tip pro rybáře</div>
+    <div class="fact-box">${f.tip}</div>
+  </div>
+  `;
+}
+
+function attachMain() {}
+
+render();
+</script>
+</body>
+</html>
