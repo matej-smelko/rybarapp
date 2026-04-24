@@ -69,7 +69,7 @@ export default function AddCatchScreen({ navigation }) {
         note,
         caught_date: date,
         caught_time: time,
-        // image_url: image // Tady by se v budoucnu posílala URL fotky
+        image_url: image
       });
       navigation.goBack();
     } catch (err) {

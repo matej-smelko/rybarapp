@@ -168,9 +168,9 @@ app.post('/api/catches', authMiddleware, async (req, res) => {
   const { species, weight_g, length_cm, revir, bait, note, caught_date, caught_time, image_url } = req.body;
   try {
     const id = uuidv4();
-    await db.query(`INSERT INTO catches (id, user_id, species, weight_g, length_cm, revir, bait, note, caught_date, caught_time)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [id, req.user.id, species, weight_g, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '']);
+    await db.query(`INSERT INTO catches (id, user_id, species, weight_g, length_cm, revir, bait, note, caught_date, caught_time, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [id, req.user.id, species, weight_g, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '', image_url || '']);
     res.status(201).json({ id, species });
   } catch (err) {
     res.status(500).json({ error: 'Chyba serveru' });
