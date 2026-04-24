@@ -1,24 +1,62 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { addCatch } from '../api/backend';
+import * as ImagePicker from 'expo-image-picker';
+// Importujeme tvá data o rybách pro našeptávač
+import fishData from '../data/fish'; 
 
 export default function AddCatchScreen({ navigation }) {
   const { token } = useAuth();
-  const [species, setSpecies] = useState('Kapr');
+  
+  // State pro formulář
+  const [species, setSpecies] = useState('');
   const [weight, setWeight] = useState('');
   const [length, setLength] = useState('');
   const [revir, setRevir] = useState('Revír Ostravice č. 1');
   const [bait, setBait] = useState('');
   const [note, setNote] = useState('');
-  const [date, setDate] = useState('2025-04-22');
-  const [time, setTime] = useState('07:00');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Dnešní datum
+  const [time, setTime] = useState(new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
   const [loading, setLoading] = useState(false);
+  
+  // State pro foto a našeptávač
+  const [image, setImage] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Funkce pro výběr fotky
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  // Funkce pro našeptávač
+  const handleSpeciesChange = (text) => {
+    setSpecies(text);
+    if (text.length > 0) {
+      const filtered = fishData.filter(fish => 
+        fish.name.toLowerCase().includes(text.toLowerCase())
+      ).slice(0, 5);
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
 
   async function onSubmit() {
     if (!species || !weight || !revir || !date) {
-      return Alert.alert('Vyplňte platné hodnoty pro druh, váhu, revír a datum.');
+      return Alert.alert('Chyba', 'Vyplňte povinná pole (druh, váha, revír a datum).');
     }
     setLoading(true);
     try {
@@ -31,6 +69,7 @@ export default function AddCatchScreen({ navigation }) {
         note,
         caught_date: date,
         caught_time: time,
+        // image_url: image // Tady by se v budoucnu posílala URL fotky
       });
       navigation.goBack();
     } catch (err) {
@@ -41,151 +80,160 @@ export default function AddCatchScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Nový úlovek</Text>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Úlovek</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Druh ryby</Text>
-            <TextInput style={styles.input} value={species} onChangeText={setSpecies} placeholder="např. Kapr" />
-          </View>
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, styles.halfInput]}>
-              <Text style={styles.label}>Váha (g)</Text>
-              <TextInput
-                style={styles.input}
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={[styles.inputGroup, styles.halfInput]}>
-              <Text style={styles.label}>Délka (cm)</Text>
-              <TextInput
-                style={styles.input}
-                value={length}
-                onChangeText={setLength}
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Místo a čas</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Revír</Text>
-            <TextInput style={styles.input} value={revir} onChangeText={setRevir} placeholder="Název revíru" />
-          </View>
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, styles.halfInput]}>
-              <Text style={styles.label}>Datum</Text>
-              <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
-            </View>
-            <View style={[styles.inputGroup, styles.halfInput]}>
-              <Text style={styles.label}>Čas</Text>
-              <TextInput style={styles.input} value={time} onChangeText={setTime} placeholder="HH:MM" />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Další info</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nástraha</Text>
-            <TextInput style={styles.input} value={bait} onChangeText={setBait} placeholder="Co jste použil" />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Poznámka</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={note}
-              onChangeText={setNote}
-              placeholder="Poznámka k úlovku"
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.button} onPress={onSubmit} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? 'Ukládám...' : 'Uložit úlovek'}</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Horní lišta s křížkem pro zavření */}
+      <View style={styles.modalHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
+          <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
+        <Text style={styles.modalTitle}>Zaznamenat úlovek</Text>
+        <View style={{ width: 40 }} /> 
+      </View>
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        
+        {/* FOTO SEKCE */}
+        <TouchableOpacity style={styles.photoUpload} onPress={pickImage}>
+          {image ? (
+            <Image source={{ uri: image }} style={styles.previewImage} />
+          ) : (
+            <View style={styles.photoPlaceholder}>
+              <Text style={styles.photoIcon}>📷</Text>
+              <Text style={styles.photoText}>Přidat fotku úlovku</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* DRUH RYBY + NAŠEPTÁVAČ */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>DRUH RYBY *</Text>
+          <TextInput 
+            style={styles.input} 
+            value={species} 
+            onChangeText={handleSpeciesChange} 
+            placeholder="Kapr obecný..." 
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <View style={styles.suggestions}>
+              {suggestions.map((item, index) => (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.suggestionItem}
+                  onPress={() => {
+                    setSpecies(item.name);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <Text style={styles.suggestionText}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* VÁHA A DÉLKA V ŘÁDKU */}
+        <View style={styles.row}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+            <Text style={styles.label}>VÁHA (G) *</Text>
+            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="3200" keyboardType="numeric" />
+          </View>
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>DÉLKA (CM)</Text>
+            <TextInput style={styles.input} value={length} onChangeText={setLength} placeholder="58" keyboardType="numeric" />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>REVÍR *</Text>
+          <TextInput style={styles.input} value={revir} onChangeText={setRevir} placeholder="Název revíru" />
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+            <Text style={styles.label}>DATUM *</Text>
+            <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+          </View>
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>ČAS</Text>
+            <TextInput style={styles.input} value={time} onChangeText={setTime} placeholder="HH:MM" />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>NÁSTRAHA</Text>
+          <TextInput style={styles.input} value={bait} onChangeText={setBait} placeholder="Kukuřice, wobler..." />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>POZNÁMKA</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={note}
+            onChangeText={setNote}
+            placeholder="Volitelná poznámka..."
+            multiline
+          />
+        </View>
+
+        {/* TLAČÍTKA AKCÍ */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.cancelButtonText}>Zrušit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.submitButton, loading && { opacity: 0.7 }]} 
+            onPress={onSubmit} 
+            disabled={loading}
+          >
+            <Text style={styles.submitButtonText}>{loading ? 'Ukládám...' : 'Zaznamenat úlovek'}</Text>
+          </TouchableOpacity>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f3ee',
+  safeArea: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
+  content: { padding: 20 },
+  
+  modalHeader: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+    paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' 
   },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  closeButtonText: { fontSize: 20, color: '#999' },
+
+  photoUpload: { 
+    height: 150, backgroundColor: '#f8f8f8', borderRadius: 15, borderStyle: 'dashed', 
+    borderWidth: 2, borderColor: '#ddd', justifyContent: 'center', alignItems: 'center', marginBottom: 25 
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#1a5c3a',
-    marginBottom: 20,
+  photoPlaceholder: { alignItems: 'center' },
+  photoIcon: { fontSize: 30, marginBottom: 5 },
+  photoText: { color: '#888', fontWeight: '500' },
+  previewImage: { width: '100%', height: '100%', borderRadius: 13 },
+
+  inputGroup: { marginBottom: 18, position: 'relative' },
+  label: { fontSize: 12, fontWeight: 'bold', color: '#666', marginBottom: 8 },
+  input: { 
+    backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0', 
+    borderRadius: 10, padding: 12, fontSize: 16, color: '#333' 
   },
-  section: {
-    marginBottom: 24,
+  textArea: { minHeight: 80, textAlignVertical: 'top' },
+  row: { flexDirection: 'row' },
+
+  suggestions: { 
+    position: 'absolute', top: 70, left: 0, right: 0, backgroundColor: '#fff', 
+    borderRadius: 10, borderWidth: 1, borderColor: '#eee', zIndex: 100, elevation: 5 
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1a5c3a',
-    marginBottom: 12,
-    paddingBottom: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: '#1a5c3a',
-  },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  halfInput: {
-    width: '48%',
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#5a5a55',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#dcdcdc',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    color: '#1a1a18',
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  button: {
-    backgroundColor: '#1a5c3a',
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  suggestionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
+  suggestionText: { fontSize: 15, color: '#333' },
+
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, marginBottom: 30 },
+  cancelButton: { backgroundColor: '#f0f0f0', paddingVertical: 15, borderRadius: 12, width: '30%', alignItems: 'center' },
+  cancelButtonText: { color: '#666', fontWeight: 'bold' },
+  submitButton: { backgroundColor: '#1a5c3a', paddingVertical: 15, borderRadius: 12, width: '65%', alignItems: 'center' },
+  submitButtonText: { color: '#fff', fontWeight: 'bold' },
 });

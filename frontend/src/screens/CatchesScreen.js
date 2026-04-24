@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, SafeAreaView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getCatches } from '../api/backend';
-import fishData from '../data/fish';
+// Importujeme mapování obrázků (vytvořili jsme ho v minulém kroku)
+import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 export default function CatchesScreen({ navigation }) {
   const { token, user } = useAuth();
@@ -25,6 +26,23 @@ export default function CatchesScreen({ navigation }) {
     }
   }, [token]);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadCatches();
+    }, [loadCatches])
+  );
+
+  // Výpočty pro statistiky (ty horní 3 boxy)
+  const totals = useMemo(() => {
+    const totalWeight = catches.reduce((sum, item) => sum + Number(item.weight_g || 0), 0);
+    const heaviest = catches.reduce((max, item) => Math.max(max, Number(item.weight_g || 0)), 0);
+    return {
+      count: catches.length,
+      totalWeight: (totalWeight / 1000).toFixed(2),
+      heaviest: (heaviest / 1000).toFixed(2),
+    };
+  }, [catches]);
+
   const filteredCatches = useMemo(() => {
     return selectedSpecies === 'Vše'
       ? catches
@@ -32,328 +50,166 @@ export default function CatchesScreen({ navigation }) {
   }, [catches, selectedSpecies]);
 
   const categories = useMemo(() => {
-    const speciesCount = catches.reduce((counts, item) => {
-      counts[item.species] = (counts[item.species] || 0) + 1;
-      return counts;
-    }, {});
-
-    return [
-      'Vše',
-      ...Object.entries(speciesCount)
-        .sort((a, b) => b[1] - a[1])
-        .map(([species]) => species),
-    ];
-  }, [catches]);
-
-  const totals = useMemo(() => {
-    const totalWeight = catches.reduce((sum, item) => sum + Number(item.weight_g || 0), 0);
-    const heaviest = catches.reduce((max, item) => Math.max(max, Number(item.weight_g || 0)), 0);
-    return {
-      count: catches.length,
-      totalWeight,
-      heaviest,
-    };
+    const speciesList = [...new Set(catches.map(c => c.species))];
+    return ['Vše', ...speciesList];
   }, [catches]);
 
   const getInitials = (name) => {
     if (!name) return '??';
-    return name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
+    return name.split(' ').map(p => p[0]).join('').toUpperCase();
   };
 
-  const formatWeight = (grams) => {
-    const value = Number(grams || 0);
-    return value >= 1000 ? `${(value / 1000).toFixed(2)} kg` : `${value} g`;
-  };
+  const renderCatchItem = ({ item }) => {
+    const imageKey = getFishImageKey(item.species);
+    const hasUserPhoto = item.image_url && item.image_url !== '';
+    const imageSource = hasUserPhoto 
+      ? { uri: item.image_url } 
+      : (FISH_IMAGES[imageKey] || FISH_IMAGES['default']);
 
-  const formatDate = (value) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`;
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('CatchDetail', { catchId: item.id, catchItem: item })}
+      >
+        <View style={styles.cardRow}>
+          <View style={styles.iconWrapper}>
+            <Image 
+              source={imageSource} 
+              style={styles.icon} 
+              resizeMode={hasUserPhoto ? "cover" : "contain"} 
+            />
+          </View>
+          <View style={styles.cardText}>
+            <Text style={styles.speciesTitle}>{item.species}</Text>
+            <Text style={styles.metaText}>{item.revir} • {new Date(item.caught_date).toLocaleDateString('cs-CZ')}</Text>
+            {item.note ? <Text style={styles.noteText} numberOfLines={1}>“{item.note}”</Text> : null}
+          </View>
+          <View style={styles.weightBadge}>
+            <Text style={styles.weightText}>
+              {item.weight_g >= 1000 ? `${(item.weight_g/1000).toFixed(2)} kg` : `${item.weight_g} g`}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
   };
-
-  const findFishImage = (species) => {
-    const fish = fishData.find((item) => item.name === species);
-    return fish?.image || null;
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadCatches();
-    }, [loadCatches])
-  );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.titleRow}>
-        <Text style={styles.header}>Moje úlovky</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddCatch')}>
-          <Text style={styles.addButtonText}>+ Přidat</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, styles.statCardSmall]}>
-          <Text style={styles.statValue}>{totals.count}</Text>
-          <Text style={styles.statLabel}>Celkem</Text>
-        </View>
-        <View style={[styles.statCard, styles.statCardLarge]}>
-          <Text style={styles.statValue}>{formatWeight(totals.totalWeight)}</Text>
-          <Text style={styles.statLabel}>Celková váha</Text>
-        </View>
-        <View style={[styles.statCard, styles.statCardSmall, styles.statLast]}>
-          <Text style={styles.statValue}>{formatWeight(totals.heaviest)}</Text>
-          <Text style={styles.statLabel}>Největší</Text>
+    <SafeAreaView style={styles.safeArea}>
+      {/* HORNÍ LIŠTA (Logo + Uživatel) */}
+      <View style={styles.topBar}>
+        <Text style={styles.logo}>Rybář<Text style={{color: '#B8860B'}}>App</Text></Text>
+        <View style={styles.userSection}>
+          <Text style={styles.userNameText}>{user?.name?.split(' ')[0]}</Text>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
+          </View>
         </View>
       </View>
 
-      <View style={styles.filtersRow}>
-        {categories.map((species) => (
-          <TouchableOpacity
-            key={species}
-            style={[
-              styles.filterChip,
-              selectedSpecies === species && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedSpecies(species)}
-          >
-            <Text style={selectedSpecies === species ? styles.filterTextActive : styles.filterText}>
-              {species}
-            </Text>
+      <View style={styles.container}>
+        {/* TITULEK + PŘIDAT */}
+        <View style={styles.titleRow}>
+          <Text style={styles.header}>Moje úlovky</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddCatch')}>
+            <Text style={styles.addButtonText}>+ Přidat</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
 
-      {loading ? (
-        <ActivityIndicator style={styles.loader} color="#1a5c3a" />
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : filteredCatches.length === 0 ? (
-        <Text style={styles.empty}>Žádné úlovky pro vybranou kategorii.</Text>
-      ) : (
-        <FlatList
-          data={filteredCatches}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => {
-            const image = findFishImage(item.species);
-            return (
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() =>
-                  navigation.navigate('CatchDetail', {
-                    catchId: item.id,
-                    catchItem: item,
-                  })
-                }
-              >
-                <View style={styles.cardRow}>
-                  <View style={styles.iconWrapper}>
-                    {image ? (
-                      <Image source={image} style={styles.icon} resizeMode="contain" />
-                    ) : (
-                      <Text style={styles.iconFallback}>{item.species?.[0] || '?'}</Text>
-                    )}
-                  </View>
-                  <View style={styles.cardText}>
-                    <Text style={styles.species}>{item.species}</Text>
-                    <Text style={styles.meta}>{formatDate(item.caught_date)} • {item.revir}</Text>
-                    {item.note ? <Text style={styles.note}>“{item.note}”</Text> : null}
-                  </View>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{formatWeight(item.weight_g)}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-          ItemSeparatorComponent={() => <View style={styles.divider} />}
-        />
-      )}
-    </View>
+        {/* STATISTIKY (Boxy z prototypu) */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{totals.count}</Text>
+            <Text style={styles.statLabel}>Celkem</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{totals.totalWeight} kg</Text>
+            <Text style={styles.statLabel}>Celková váha</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{totals.heaviest} kg</Text>
+            <Text style={styles.statLabel}>Největší</Text>
+          </View>
+        </View>
+
+        {/* FILTRY (Horizontální list) */}
+        <View style={{marginBottom: 15}}>
+            <FlatList 
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={categories}
+                keyExtractor={item => item}
+                renderItem={({item}) => (
+                    <TouchableOpacity 
+                        style={[styles.filterChip, selectedSpecies === item && styles.filterActive]}
+                        onPress={() => setSelectedSpecies(item)}
+                    >
+                        <Text style={[styles.filterText, selectedSpecies === item && styles.filterTextActive]}>{item}</Text>
+                    </TouchableOpacity>
+                )}
+            />
+        </View>
+
+        {loading ? (
+          <ActivityIndicator style={styles.loader} color="#1a5c3a" />
+        ) : (
+          <FlatList
+            data={filteredCatches}
+            keyExtractor={(item) => item.id}
+            renderItem={renderCatchItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f3ee',
+  safeArea: { flex: 1, backgroundColor: '#fff' },
+  topBar: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+    paddingHorizontal: 20, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' 
   },
-  userBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1a5c3a',
-    justifyContent: 'center',
-    alignItems: 'center',
+  logo: { fontSize: 22, fontWeight: 'bold', color: '#1a5c3a' },
+  userSection: { flexDirection: 'row', alignItems: 'center' },
+  userNameText: { marginRight: 10, fontWeight: '500', color: '#333' },
+  avatarCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#d1e7dd', justifyContent: 'center', alignItems: 'center' },
+  avatarText: { color: '#1a5c3a', fontWeight: 'bold', fontSize: 13 },
+
+  container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#fff' },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20 },
+  header: { fontSize: 26, fontWeight: 'bold', color: '#001a1a' },
+  addButton: { backgroundColor: '#1a5c3a', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 15 },
+  addButtonText: { color: '#fff', fontWeight: 'bold' },
+
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  statCard: { 
+    backgroundColor: '#f8f8f8', width: '31%', paddingVertical: 15, borderRadius: 15, alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2
   },
-  userInitials: {
-    color: '#fff',
-    fontWeight: '700',
+  statValue: { fontSize: 18, fontWeight: 'bold', color: '#1a5c3a' },
+  statLabel: { fontSize: 11, color: '#888', marginTop: 4 },
+
+  filterChip: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee', marginRight: 10 },
+  filterActive: { backgroundColor: '#1a5c3a', borderColor: '#1a5c3a' },
+  filterText: { color: '#666', fontWeight: '500' },
+  filterTextActive: { color: '#fff' },
+
+  listContent: { paddingBottom: 20 },
+  card: { 
+    backgroundColor: '#fff', borderRadius: 15, padding: 12, marginBottom: 15,
+    borderWidth: 1, borderColor: '#f3f3f3', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 10, elevation: 2
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1a5c3a',
-  },
-  addButton: {
-    backgroundColor: '#1a5c3a',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginBottom: 18,
-  },
-  statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    alignItems: 'center',
-  },
-  statCardSmall: {
-    flex: 1,
-    marginRight: 10,
-  },
-  statCardLarge: {
-    flex: 1.5,
-    marginRight: 10,
-  },
-  statLast: {
-    marginRight: 0,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1a5c3a',
-    marginBottom: 6,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#5a5a55',
-  },
-  filtersRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  filterChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: '#f1f2ef',
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  filterChipActive: {
-    backgroundColor: '#1a5c3a',
-  },
-  filterText: {
-    color: '#1a5c3a',
-    fontWeight: '600',
-  },
-  filterTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  loader: {
-    marginTop: 20,
-  },
-  listContent: {
-    paddingBottom: 8,
-  },
-  error: {
-    marginTop: 20,
-    color: '#c0392b',
-    fontSize: 15,
-  },
-  empty: {
-    marginTop: 20,
-    color: '#5a5a55',
-    fontSize: 15,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#eef1ec',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  icon: {
-    width: 32,
-    height: 32,
-  },
-  iconFallback: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1a5c3a',
-  },
-  cardText: {
-    flex: 1,
-  },
-  species: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1a5c3a',
-    marginBottom: 2,
-  },
-  meta: {
-    fontSize: 13,
-    color: '#5a5a55',
-  },
-  badge: {
-    backgroundColor: '#e6f2e8',
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  note: {
-    marginTop: 6,
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: '#5a5a55',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1a5c3a',
-  },
-  divider: {
-    height: 12,
-  },
+  cardRow: { flexDirection: 'row', alignItems: 'center' },
+  iconWrapper: { width: 55, height: 55, borderRadius: 12, backgroundColor: '#f9f9f9', justifyContent: 'center', alignItems: 'center' },
+  icon: { width: '85%', height: '85%' },
+  cardText: { flex: 1, marginLeft: 15 },
+  speciesTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  metaText: { fontSize: 12, color: '#999', marginTop: 2 },
+  noteText: { fontSize: 12, color: '#777', fontStyle: 'italic', marginTop: 4 },
+  weightBadge: { backgroundColor: '#f0f9f4', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  weightText: { color: '#1a5c3a', fontWeight: 'bold', fontSize: 12 },
+  loader: { marginTop: 50 }
 });

@@ -73,7 +73,8 @@ async function initDB() {
         note TEXT,
         caught_date TEXT NOT NULL,
         caught_time TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        image_url TEXT
       );
       CREATE TABLE IF NOT EXISTS fisheries (
         id TEXT PRIMARY KEY,
@@ -164,7 +165,7 @@ app.get('/api/catches', authMiddleware, async (req, res) => {
 });
 
 app.post('/api/catches', authMiddleware, async (req, res) => {
-  const { species, weight_g, length_cm, revir, bait, note, caught_date, caught_time } = req.body;
+  const { species, weight_g, length_cm, revir, bait, note, caught_date, caught_time, image_url } = req.body;
   try {
     const id = uuidv4();
     await db.query(`INSERT INTO catches (id, user_id, species, weight_g, length_cm, revir, bait, note, caught_date, caught_time)
