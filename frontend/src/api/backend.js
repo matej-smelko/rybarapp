@@ -38,12 +38,6 @@ export async function addCatch(token, payload) {
   return response.data;
 }
 
-export async function deleteCatch(token, catchId) {
-  const res = await axios.delete(`${API_URL}/api/catches/${catchId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
-}
 
 export async function getCatch(token, catchId) {
   const response = await api.get(`/api/catches/${catchId}`, {
