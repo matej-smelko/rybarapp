@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { addCatch } from '../api/backend';
@@ -21,28 +21,23 @@ export default function AddCatchScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   
   // State pro foto a našeptávač
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(null); 
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // --- FUNKCE PRO NAHRÁVÁNÍ NA CLOUDINARY ---
-  const uploadImageToCloudinary = async (uri) => {
+  const uploadImageToCloudinary = async (base64Data) => {
     const data = new FormData();
-    data.append('file', {
-      uri: uri,
-      type: 'image/jpeg',
-      name: 'upload.jpg',
-    });
     
-    // Tvoje údaje z Cloudinary
+    // Klíčové nastavení pro Unsigned upload
+    data.append('file', base64Data);
     data.append('upload_preset', 'rybar_app'); 
-    const cloudName = 'obrazky';
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${dyhz8sl5z}/image/upload`, {
+      // POUŽITO CLOUD NAME: "obrazky"
+      const response = await fetch('https://api.cloudinary.com/v1_1/obrazky/image/upload', {
         method: 'POST',
         body: data,
-        // Důležité: u fetch s FormData v React Native NENASTAVUJEME Content-Type header manuálně!
       });
       
       const result = await response.json();
@@ -50,30 +45,30 @@ export default function AddCatchScreen({ navigation }) {
       if (result.secure_url) {
         return result.secure_url;
       } else {
-        console.error('Cloudinary chyba:', result);
+        console.error('Cloudinary odpověď:', result);
         throw new Error(result.error?.message || 'Chyba nahrávání');
       }
     } catch (error) {
-      console.error('Detail chyby nahrávání:', error);
+      console.error('Chyba nahrávání na Cloudinary:', error);
       throw error;
     }
   };
 
-  // Funkce pro výběr fotky z mobilu
+  // --- VÝBĚR FOTKY S BASE64 ---
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.6,
+      quality: 0.5, 
+      base64: true, 
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
     }
   };
 
-  // Funkce pro našeptávač ryb
   const handleSpeciesChange = (text) => {
     setSpecies(text);
     if (text.length > 0) {
@@ -96,12 +91,12 @@ export default function AddCatchScreen({ navigation }) {
     let finalImageUrl = null;
 
     try {
-      // 1. Pokud uživatel vybral fotku, nejdřív ji nahrajeme na Cloudinary
+      // 1. Nahrání na Cloudinary
       if (image) {
         finalImageUrl = await uploadImageToCloudinary(image);
       }
 
-      // 2. Poté odešleme data do tvého backendu na Railway
+      // 2. Uložení do DB na Railway
       await addCatch(token, {
         species,
         weight_g: Number(weight),
@@ -111,13 +106,13 @@ export default function AddCatchScreen({ navigation }) {
         note,
         caught_date: date,
         caught_time: time,
-        image_url: finalImageUrl // Tady už je hotová URL adresa z cloudu
+        image_url: finalImageUrl
       });
 
       navigation.goBack();
     } catch (err) {
-      console.error(err);
-      Alert.alert('Chyba', 'Nepodařilo se uložit úlovek. Zkontrolujte připojení nebo nastavení Cloudinary.');
+      console.error('Chyba:', err);
+      Alert.alert('Chyba', 'Nepodařilo se uložit úlovek. Zkontrolujte připojení k internetu.');
     } finally {
       setLoading(false);
     }
@@ -135,7 +130,6 @@ export default function AddCatchScreen({ navigation }) {
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         
-        {/* FOTO SEKCE */}
         <TouchableOpacity style={styles.photoUpload} onPress={pickImage} disabled={loading}>
           {image ? (
             <Image source={{ uri: image }} style={styles.previewImage} />
@@ -147,7 +141,6 @@ export default function AddCatchScreen({ navigation }) {
           )}
         </TouchableOpacity>
 
-        {/* DRUH RYBY + NAŠEPTÁVAČ */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>DRUH RYBY *</Text>
           <TextInput 
@@ -175,7 +168,6 @@ export default function AddCatchScreen({ navigation }) {
           )}
         </View>
 
-        {/* VÁHA A DÉLKA */}
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>VÁHA (G) *</Text>
@@ -220,7 +212,6 @@ export default function AddCatchScreen({ navigation }) {
           />
         </View>
 
-        {/* TLAČÍTKA */}
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()} disabled={loading}>
             <Text style={styles.cancelButtonText}>Zrušit</Text>
