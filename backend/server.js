@@ -114,7 +114,8 @@ async function initDB() {
       );
     `);
 
-    // Migrace: přidání parent_id pro vnořené komentáře (safe - nefailuje pokud už existuje)
+    // Migrace: přidání chybějících sloupců do comments (safe - nefailuje pokud už existuje)
+    try { await db.query('ALTER TABLE comments ADD COLUMN likes_count INTEGER DEFAULT 0'); } catch {}
     try { await db.query('ALTER TABLE comments ADD COLUMN parent_id TEXT REFERENCES comments(id)'); } catch {}
 
     // Seed data
