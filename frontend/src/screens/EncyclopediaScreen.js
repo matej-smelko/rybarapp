@@ -2,14 +2,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
-import { getFish } from '../api/backend';
+import { getFish, deleteFish } from '../api/backend';
 import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 const { width } = Dimensions.get('window');
 const cardWidth = Math.max((width - 60) / 2, 160);
 
 export default function EncyclopediaScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [fishData, setFishData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -39,6 +39,22 @@ export default function EncyclopediaScreen({ navigation }) {
   function getImage(fish) {
     const key = getFishImageKey(fish.name);
     return FISH_IMAGES[key] || FISH_IMAGES['default'];
+  }
+
+  function handleFishMenu(item) {
+    Alert.alert(item.name, null, [
+      { text: 'Editovat', onPress: () => navigation.navigate('AdminFishForm', { editFish: item }) },
+      { text: 'Smazat', style: 'destructive', onPress: () => {
+        Alert.alert('Smazat rybu', `Opravdu smazat ${item.name}?`, [
+          { text: 'Zrušit', style: 'cancel' },
+          { text: 'Smazat', style: 'destructive', onPress: async () => {
+            try { await deleteFish(token, item.id); setFishData(prev => prev.filter(f => f.id !== item.id)); }
+            catch { Alert.alert('Chyba', 'Nelze smazat rybu.'); }
+          }},
+        ]);
+      }},
+      { text: 'Zrušit', style: 'cancel' },
+    ]);
   }
 
   return (
@@ -77,7 +93,13 @@ export default function EncyclopediaScreen({ navigation }) {
           <TouchableOpacity
             style={[styles.card, { width: cardWidth }]}
             onPress={() => navigation.navigate('FishDetail', { fishId: item.id, fish: item })}
+            activeOpacity={0.7}
           >
+            {user?.role === 'admin' && (
+              <TouchableOpacity style={styles.cardMenuBtn} onPress={() => handleFishMenu(item)}>
+                <Text style={styles.cardMenuDots}>⋮</Text>
+              </TouchableOpacity>
+            )}
             <View style={styles.imageWrapper}>
               <Image source={getImage(item)} style={styles.image} resizeMode="contain" />
             </View>
@@ -166,7 +188,10 @@ const styles = StyleSheet.create({
     elevation: 2,
     minHeight: 320,
     justifyContent: 'space-between',
+    position: 'relative',
   },
+  cardMenuBtn: { position: 'absolute', top: 6, right: 6, zIndex: 10, padding: 6 },
+  cardMenuDots: { fontSize: 18, fontWeight: '700', color: '#999' },
   imageWrapper: {
     height: 110,
     marginBottom: 12,
