@@ -78,17 +78,21 @@ export default function AdminUsersScreen() {
           } else {
             csv += `${u.name};${u.email};${u.role};;;\n`;
           }
-        } catch {}
+        } catch (innerErr) {
+          csv += `${u.name};${u.email};${u.role};;;\n`;
+        }
       }
-      const uri = FileSystem.documentDirectory + 'rybari_export.csv';
-      await FileSystem.writeAsStringAsync(uri, '\uFEFF' + csv, { encoding: FileSystem.EncodingType.UTF8 });
+      const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
+      if (!dir) return Alert.alert('Chyba', 'Nelze získat přístup k úložišti');
+      const uri = dir + 'rybari_export.csv';
+      await FileSystem.writeAsStringAsync(uri, '\uFEFF' + csv, { encoding: 'utf8' });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, { mimeType: 'text/csv', dialogTitle: 'Export rybářů' });
       } else {
         Alert.alert('Hotovo', 'Soubor uložen: ' + uri);
       }
     } catch (err) {
-      Alert.alert('Chyba', 'Export se nezdařil');
+      Alert.alert('Chyba', 'Export se nezdařil: ' + (err.message || ''));
     }
   }
 
