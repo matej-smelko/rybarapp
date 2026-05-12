@@ -89,3 +89,10 @@ export async function toggleLike(token, postId) {
   });
   return response.data;
 }
+
+export async function toggleCommentLike(token, commentId) {
+  const response = await api.post(`/api/comments/${commentId}/like`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}

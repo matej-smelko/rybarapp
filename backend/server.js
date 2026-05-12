@@ -104,7 +104,13 @@ async function initDB() {
         post_id TEXT NOT NULL REFERENCES forum_posts(id),
         user_id TEXT NOT NULL REFERENCES users(id),
         body TEXT NOT NULL,
+        likes_count INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS comment_likes (
+        user_id TEXT NOT NULL,
+        comment_id TEXT NOT NULL,
+        PRIMARY KEY (user_id, comment_id)
       );
     `);
 
@@ -275,10 +281,24 @@ app.post('/api/posts/:id/like', authMiddleware, async (req, res) => {
 
 app.get('/api/posts/:id/comments', async (req, res) => {
   try {
+    let userId = null;
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      try { userId = jwt.verify(auth.slice(7), JWT_SECRET).id; } catch {}
+    }
     const comments = await db.all(
       'SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.post_id = $1 ORDER BY c.created_at ASC',
       [req.params.id]
     );
+    if (userId) {
+      const likedCommentIds = new Set(
+        (await db.all('SELECT comment_id FROM comment_likes WHERE user_id = $1', [userId]))
+          .map(r => r.comment_id)
+      );
+      for (const c of comments) {
+        c.liked = likedCommentIds.has(c.id);
+      }
+    }
     res.json(comments);
   } catch (err) {
     console.error(err);
@@ -301,7 +321,30 @@ app.post('/api/posts/:id/comments', authMiddleware, async (req, res) => {
       'SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = $1',
       [id]
     );
+    comment.liked = false;
     res.status(201).json(comment);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.post('/api/comments/:id/like', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await db.get(
+      'SELECT * FROM comment_likes WHERE user_id = $1 AND comment_id = $2',
+      [req.user.id, id]
+    );
+    if (existing) {
+      await db.query('DELETE FROM comment_likes WHERE user_id = $1 AND comment_id = $2', [req.user.id, id]);
+      await db.query('UPDATE comments SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = $1', [id]);
+      res.json({ liked: false });
+    } else {
+      await db.query('INSERT INTO comment_likes (user_id, comment_id) VALUES ($1, $2)', [req.user.id, id]);
+      await db.query('UPDATE comments SET likes_count = likes_count + 1 WHERE id = $1', [id]);
+      res.json({ liked: true });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Chyba serveru' });

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { addComment, toggleLike, getComments } from '../api/backend';
+import { addComment, toggleLike, toggleCommentLike, getComments } from '../api/backend';
 
 function formatCZ(dateStr) {
   if (!dateStr) return '';
@@ -21,6 +21,7 @@ function getInitials(name) {
 export default function PostDetailScreen({ route, navigation }) {
   const { token } = useAuth();
   const { post } = route.params;
+  const insets = useSafeAreaInsets();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
@@ -41,6 +42,10 @@ export default function PostDetailScreen({ route, navigation }) {
     loadComments();
   }, [post.id, token]);
 
+  function onReply(authorName) {
+    setCommentText(`@${authorName} `);
+  }
+
   async function onSubmitComment() {
     if (!commentText.trim()) return;
     try {
@@ -57,6 +62,17 @@ export default function PostDetailScreen({ route, navigation }) {
       const result = await toggleLike(token, post.id);
       setLiked(result.liked);
       setLikes((prev) => (result.liked ? prev + 1 : Math.max(prev - 1, 0)));
+    } catch {}
+  }
+
+  async function handleCommentLike(commentId) {
+    try {
+      const result = await toggleCommentLike(token, commentId);
+      setComments(prev => prev.map(c =>
+        c.id === commentId
+          ? { ...c, liked: result.liked, likes_count: (c.likes_count || 0) + (result.liked ? 1 : -1) }
+          : c
+      ));
     } catch {}
   }
 
@@ -117,17 +133,28 @@ export default function PostDetailScreen({ route, navigation }) {
                 <View style={styles.commentAvatar}>
                   <Text style={styles.commentAvatarText}>{getInitials(item.author_name)}</Text>
                 </View>
-                <View>
+                <View style={styles.commentHeaderText}>
                   <Text style={styles.commentAuthor}>{item.author_name}</Text>
                   <Text style={styles.commentDate}>{formatCZ(item.created_at)}</Text>
                 </View>
               </View>
               <Text style={styles.commentBody}>{item.body}</Text>
+              <View style={styles.commentFooter}>
+                <TouchableOpacity style={styles.commentLikeBtn} onPress={() => handleCommentLike(item.id)}>
+                  <Text style={[styles.commentHeart, item.liked && styles.commentHeartActive]}>
+                    {item.liked ? '♥' : '♡'}
+                  </Text>
+                  <Text style={styles.commentLikeCount}>{item.likes_count || 0}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => onReply(item.author_name)}>
+                  <Text style={styles.replyBtn}>Odpovědět</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         />
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 10 }]}>
           <TextInput
             style={styles.commentInput}
             value={commentText}
@@ -195,6 +222,7 @@ const styles = StyleSheet.create({
     borderColor: '#f3f3f3',
   },
   commentHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  commentHeaderText: { flex: 1 },
   commentAvatar: {
     width: 28, height: 28, borderRadius: 14,
     backgroundColor: '#edeae2',
@@ -204,7 +232,13 @@ const styles = StyleSheet.create({
   commentAvatarText: { color: '#1a5c3a', fontWeight: '700', fontSize: 11 },
   commentAuthor: { fontSize: 13, fontWeight: '600', color: '#1a1a18' },
   commentDate: { fontSize: 10, color: '#8a8a82', marginTop: 1 },
-  commentBody: { fontSize: 14, color: '#444', lineHeight: 20 },
+  commentBody: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 8 },
+  commentFooter: { flexDirection: 'row', alignItems: 'center' },
+  commentLikeBtn: { flexDirection: 'row', alignItems: 'center', marginRight: 16 },
+  commentHeart: { fontSize: 14, marginRight: 4, color: '#999' },
+  commentHeartActive: { color: '#e74c3c' },
+  commentLikeCount: { fontSize: 12, fontWeight: '600', color: '#666' },
+  replyBtn: { fontSize: 12, fontWeight: '600', color: '#1a5c3a' },
 
   empty: { color: '#8a8a82', textAlign: 'center', marginTop: 20, fontSize: 14 },
 
