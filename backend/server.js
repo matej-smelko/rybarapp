@@ -197,6 +197,102 @@ app.post('/api/catches', authMiddleware, async (req, res) => {
   }
 });
 
+// ==================== FÓRUM ====================
+
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await db.all(`
+      SELECT p.*, u.name AS author_name
+      FROM forum_posts p
+      JOIN users u ON u.id = p.user_id
+      ORDER BY p.created_at DESC
+    `);
+    res.json({ posts });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.post('/api/posts', authMiddleware, async (req, res) => {
+  const { category, title, body } = req.body;
+  if (!title || !body) {
+    return res.status(400).json({ error: 'Nadpis a text jsou povinné' });
+  }
+  try {
+    const id = uuidv4();
+    await db.query(
+      'INSERT INTO forum_posts (id, user_id, category, title, body) VALUES ($1, $2, $3, $4, $5)',
+      [id, req.user.id, category || 'Diskuse', title, body]
+    );
+    const post = await db.get(
+      'SELECT p.*, u.name AS author_name FROM forum_posts p JOIN users u ON u.id = p.user_id WHERE p.id = $1',
+      [id]
+    );
+    res.status(201).json(post);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.post('/api/posts/:id/like', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await db.get(
+      'SELECT * FROM forum_likes WHERE user_id = $1 AND post_id = $2',
+      [req.user.id, id]
+    );
+    if (existing) {
+      await db.query('DELETE FROM forum_likes WHERE user_id = $1 AND post_id = $2', [req.user.id, id]);
+      await db.query('UPDATE forum_posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = $1', [id]);
+      res.json({ liked: false });
+    } else {
+      await db.query('INSERT INTO forum_likes (user_id, post_id) VALUES ($1, $2)', [req.user.id, id]);
+      await db.query('UPDATE forum_posts SET likes_count = likes_count + 1 WHERE id = $1', [id]);
+      res.json({ liked: true });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.get('/api/posts/:id/comments', async (req, res) => {
+  try {
+    const comments = await db.all(
+      'SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.post_id = $1 ORDER BY c.created_at ASC',
+      [req.params.id]
+    );
+    res.json(comments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.post('/api/posts/:id/comments', authMiddleware, async (req, res) => {
+  const { body } = req.body;
+  if (!body || !body.trim()) {
+    return res.status(400).json({ error: 'Text komentáře je povinný' });
+  }
+  try {
+    const id = uuidv4();
+    await db.query(
+      'INSERT INTO comments (id, post_id, user_id, body) VALUES ($1, $2, $3, $4)',
+      [id, req.params.id, req.user.id, body.trim()]
+    );
+    const comment = await db.get(
+      'SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = $1',
+      [id]
+    );
+    res.status(201).json(comment);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);
 });
