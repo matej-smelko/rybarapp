@@ -7,14 +7,15 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator, 
-  SafeAreaView, 
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { getCatch } from '../api/backend';
 import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 export default function CatchDetailScreen({ route, navigation }) {
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const { catchId, catchItem } = route.params || {};
   const [data, setData] = useState(catchItem || null);
   const [loading, setLoading] = useState(!catchItem);
@@ -52,7 +53,7 @@ export default function CatchDetailScreen({ route, navigation }) {
     : (FISH_IMAGES[imageKey] || FISH_IMAGES['default']);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         
         {/* Tlačítko Zpět */}
@@ -113,7 +114,7 @@ export default function CatchDetailScreen({ route, navigation }) {
         ) : null}
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

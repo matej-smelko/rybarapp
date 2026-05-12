@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { addPost, editPost } from '../api/backend';
 
@@ -8,6 +8,7 @@ const categories = ['Tipy', 'Úlovky', 'Vybavení', 'Diskuse'];
 
 export default function AddPostScreen({ route, navigation }) {
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const editPostData = route.params?.editPost;
   const [category, setCategory] = useState(editPostData?.category || categories[0]);
   const [title, setTitle] = useState(editPostData?.title || '');
@@ -34,7 +35,7 @@ export default function AddPostScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.modalHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>✕</Text>
@@ -92,7 +93,7 @@ export default function AddPostScreen({ route, navigation }) {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

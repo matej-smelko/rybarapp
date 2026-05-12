@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { addCatch, editCatch } from '../api/backend';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,6 +8,7 @@ import fishData from '../data/fish';
 
 export default function AddCatchScreen({ route, navigation }) {
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const editData = route.params?.editCatch;
 
   // State pro formulář
@@ -138,7 +139,7 @@ export default function AddCatchScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.modalHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>✕</Text>
@@ -251,7 +252,7 @@ export default function AddCatchScreen({ route, navigation }) {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

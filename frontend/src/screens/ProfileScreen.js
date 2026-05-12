@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { getUserStats } from '../api/backend';
 
@@ -18,6 +19,7 @@ function formatDate(dateStr) {
 
 export default function ProfileScreen() {
   const { user, token, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -30,9 +32,9 @@ export default function ProfileScreen() {
   }, [token]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
@@ -91,22 +93,21 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
             <Text style={styles.logoutButtonText}>Odhlásit se z aplikace</Text>
           </TouchableOpacity>
-          <Text style={styles.versionText}>Verze 1.2.0 (Beta)</Text>
         </View>
 
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fcfcfc',
+    backgroundColor: '#ffffff',
   },
-  container: {
-    flex: 1,
+  scrollContent: {
     padding: 24,
+    paddingBottom: 40,
   },
   profileHeader: {
     alignItems: 'center',

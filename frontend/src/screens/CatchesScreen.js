@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getCatches, deleteCatch } from '../api/backend';
@@ -123,7 +123,7 @@ export default function CatchesScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.container}>
         {/* TITULEK + PŘIDAT */}
         <View style={styles.titleRow}>
@@ -182,7 +182,7 @@ export default function CatchesScreen({ navigation }) {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

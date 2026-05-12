@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,7 @@ const Tab = createBottomTabNavigator();
 
 export default function MainTabs({ navigation }) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const fullName = user?.name || 'Uživatel';
   const firstName = fullName.split(' ')[0];
   const initials = fullName
@@ -23,7 +24,7 @@ export default function MainTabs({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.topBarContainer}>
+      <View style={[styles.topBarContainer, { paddingTop: insets.top }]}>
         <View style={styles.topBar}>
           <View>
             <Text style={styles.brandTitle}>
@@ -39,7 +40,7 @@ export default function MainTabs({ navigation }) {
             </View>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
       <View style={styles.contentContainer}>
         <Tab.Navigator
           screenOptions={{
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 6,
     borderRadius: 999,
-    backgroundColor: '#f2f4f0',
+    backgroundColor: '#ffffff',
   },
   userName: {
     marginRight: 12,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { addFish, updateFish } from '../api/backend';
 
@@ -8,6 +8,7 @@ const MONTHS = ['L','Ú','B','D','K','Č','Č','S','Z','Ř','L','P'];
 
 export default function AdminFishFormScreen({ route, navigation }) {
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const editFish = route.params?.editFish;
 
   const [name, setName] = useState(editFish?.name || '');
@@ -54,7 +55,7 @@ export default function AdminFishFormScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.modalHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.closeText}>✕</Text>
@@ -127,7 +128,7 @@ export default function AdminFishFormScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

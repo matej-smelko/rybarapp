@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 const MONTHS = ['L', 'Ú', 'B', 'D', 'K', 'Č', 'Č', 'S', 'Z', 'Ř', 'L', 'P'];
@@ -8,6 +8,7 @@ const MONTHS = ['L', 'Ú', 'B', 'D', 'K', 'Č', 'Č', 'S', 'Z', 'Ř', 'L', 'P'];
 export default function FishDetailScreen({ route, navigation }) {
   const { fish: initialFish } = route.params;
   const [fish, setFish] = useState(initialFish);
+  const insets = useSafeAreaInsets();
 
   function getImage() {
     const key = getFishImageKey(fish.name);
@@ -15,7 +16,7 @@ export default function FishDetailScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>← Zpět na seznam</Text>
@@ -108,7 +109,7 @@ export default function FishDetailScreen({ route, navigation }) {
         <Text style={styles.boxText}>{fish.tips ? fish.tips : 'Žádný tip k dispozici.'}</Text>
       </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
