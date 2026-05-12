@@ -622,7 +622,7 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
     const users = await db.all(`
       SELECT u.id, u.name, u.email, u.role, u.created_at,
         (SELECT COUNT(*) FROM catches WHERE user_id = u.id) AS catch_count
-      FROM users u ORDER BY u.created_at DESC
+      FROM users u WHERE u.role = 'rybar' ORDER BY u.created_at DESC
     `);
     res.json(users);
   } catch (err) {

@@ -66,31 +66,25 @@ export default function AdminUsersScreen() {
   async function exportToCsv() {
     try {
       const allUsers = await getAdminUsers(token);
-      let csv = 'Jméno;Email;Role;Druh;Váha (kg);Délka (cm);Revír;Nástraha;Datum\n';
+      let csv = 'Jméno;Email;Druh;Váha (kg);Délka (cm);Revír;Nástraha;Datum\n';
       for (const u of allUsers) {
         try {
           const data = await getAdminUserCatches(token, u.id);
           if (data.catches && data.catches.length > 0) {
             for (const c of data.catches) {
               const weight = (c.weight_g / 1000).toFixed(2).replace('.', ',');
-              csv += `${u.name};${u.email};${u.role};${c.species};${weight};${c.length_cm || ''};${c.revir || ''};${c.bait || ''};${c.caught_date || ''}\n`;
+              csv += `${u.name};${u.email};${c.species};${weight};${c.length_cm || ''};${c.revir || ''};${c.bait || ''};${c.caught_date || ''}\n`;
             }
           } else {
-            csv += `${u.name};${u.email};${u.role};;;\n`;
+            csv += `${u.name};${u.email};;;;;\n`;
           }
-        } catch (innerErr) {
-          csv += `${u.name};${u.email};${u.role};;;\n`;
+        } catch {
+          csv += `${u.name};${u.email};;;;;\n`;
         }
       }
-      const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
-      if (!dir) return Alert.alert('Chyba', 'Nelze získat přístup k úložišti');
-      const uri = dir + 'rybari_export.csv';
+      const uri = FileSystem.cacheDirectory + 'rybari_export.csv';
       await FileSystem.writeAsStringAsync(uri, '\uFEFF' + csv, { encoding: 'utf8' });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: 'text/csv', dialogTitle: 'Export rybářů' });
-      } else {
-        Alert.alert('Hotovo', 'Soubor uložen: ' + uri);
-      }
+      await Sharing.shareAsync(uri, { mimeType: 'text/csv', dialogTitle: 'Export rybářů' });
     } catch (err) {
       Alert.alert('Chyba', 'Export se nezdařil: ' + (err.message || ''));
     }
