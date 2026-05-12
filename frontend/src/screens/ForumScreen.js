@@ -1,14 +1,25 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getPosts } from '../api/backend';
+
+const CATEGORIES = ['Vše', 'Tipy', 'Úlovky', 'Vybavení', 'Diskuse'];
+
+function formatCZ(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+}
 
 export default function ForumScreen({ navigation }) {
   const { token } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState('Vše');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadPosts = useCallback(async () => {
     if (!token) {
@@ -35,6 +46,20 @@ export default function ForumScreen({ navigation }) {
     }, [loadPosts])
   );
 
+  const filteredPosts = useMemo(() => {
+    let result = posts;
+    if (categoryFilter !== 'Vše') {
+      result = result.filter(p => p.category === categoryFilter);
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [posts, categoryFilter, searchQuery]);
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
@@ -46,24 +71,48 @@ export default function ForumScreen({ navigation }) {
           <Text style={styles.addButtonText}>+ Přidat</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.searchContainer}>
+        <Text style={styles.searchIcon}>🔎</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Hledat v příspěvcích..."
+          placeholderTextColor="#8a8a82"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      <View style={styles.chipRow}>
+        {CATEGORIES.map(cat => (
+          <TouchableOpacity
+            key={cat}
+            style={[styles.chip, categoryFilter === cat && styles.chipActive]}
+            onPress={() => setCategoryFilter(cat)}
+          >
+            <Text style={[styles.chipText, categoryFilter === cat && styles.chipTextActive]}>{cat}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {loading ? (
         <ActivityIndicator style={styles.loader} color="#1a5c3a" />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
-      ) : (!posts || posts.length === 0) ? (
-        <Text style={styles.empty}>Zatím nejsou žádné příspěvky.</Text>
+      ) : filteredPosts.length === 0 ? (
+        <Text style={styles.empty}>Žádné příspěvky neodpovídají filtru.</Text>
       ) : (
         <FlatList
-          data={posts}
+          data={filteredPosts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.cardHeader}>
                 <Text style={styles.category}>{item.category}</Text>
-                <Text style={styles.date}>{item.created_at || item.date}</Text>
+                <Text style={styles.date}>{formatCZ(item.created_at || item.date)}</Text>
               </View>
               <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.body}>{item.body}</Text>
+              <Text style={styles.body} numberOfLines={3}>{item.body}</Text>
             </TouchableOpacity>
           )}
           ItemSeparatorComponent={() => <View style={styles.divider} />}
@@ -77,7 +126,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: '#ffffff',
   },
   headerRow: {
     flexDirection: 'row',
@@ -99,6 +148,49 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: '#fff',
     fontWeight: '700',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0ede7',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  searchIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#1a1a18',
+    padding: 0,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+    gap: 8,
+  },
+  chip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#f0ede7',
+  },
+  chipActive: {
+    backgroundColor: '#1a5c3a',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#5a5a55',
+  },
+  chipTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
   loader: {
     marginTop: 40,
