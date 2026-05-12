@@ -132,10 +132,7 @@ export default function ForumScreen({ navigation }) {
             const initials = getInitials(authorName);
             
             return (
-              <TouchableOpacity 
-                style={styles.card} 
-                onPress={() => navigation.navigate('PostDetail', { post: item })}
-              >
+              <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <View style={styles.userInfo}>
                     <View style={styles.avatar}>
@@ -170,7 +167,7 @@ export default function ForumScreen({ navigation }) {
                     </TouchableOpacity>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </View>
             );
           }}
           contentContainerStyle={styles.listContent}
