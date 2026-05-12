@@ -1,7 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { addComment, toggleLike, getComments } from '../api/backend';
+
+function formatCZ(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return parts[0][0].toUpperCase();
+}
 
 export default function PostDetailScreen({ route, navigation }) {
   const { token } = useAuth();
@@ -42,182 +57,180 @@ export default function PostDetailScreen({ route, navigation }) {
       const result = await toggleLike(token, post.id);
       setLiked(result.liked);
       setLikes((prev) => (result.liked ? prev + 1 : Math.max(prev - 1, 0)));
-    } catch (err) {
-      Alert.alert('Chyba', 'Nelze změnit lajky.');
-    }
+    } catch {}
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Zpět</Text>
-      </TouchableOpacity>
-      <View style={styles.card}>
-        <View style={styles.headerRow}>
-          <Text style={styles.category}>{post.category}</Text>
-          <Text style={styles.likes}>{likes} lajků</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>← Zpět</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.title}>{post.title}</Text>
-        <Text style={styles.body}>{post.body}</Text>
-        <Text style={styles.author}>Od {post.author_name}</Text>
-      </View>
-      <View style={styles.actionsRow}>
-        <TouchableOpacity style={[styles.actionButton, liked && styles.actionButtonActive]} onPress={onToggleLike}>
-          <Text style={[styles.actionText, liked && styles.actionTextActive]}>{liked ? 'Odlajkovat' : 'Lajkovat'}</Text>
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.sectionTitle}>Komentáře</Text>
-      {loading ? (
-        <ActivityIndicator color="#1a5c3a" />
-      ) : (
+
         <FlatList
+          style={styles.flex}
+          contentContainerStyle={styles.listContent}
           data={comments}
           keyExtractor={(item) => item.id}
+          ListHeaderComponent={() => (
+            <>
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.authorRow}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>{getInitials(post.author_name)}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.authorName}>{post.author_name}</Text>
+                      <Text style={styles.date}>{formatCZ(post.created_at)}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryText}>{post.category}</Text>
+                  </View>
+                </View>
+                <Text style={styles.title}>{post.title}</Text>
+                <Text style={styles.body}>{post.body}</Text>
+                <View style={styles.likeRow}>
+                  <TouchableOpacity style={styles.likeBtn} onPress={onToggleLike}>
+                    <Text style={[styles.heartIcon, liked && styles.heartActive]}>
+                      {liked ? '♥' : '♡'}
+                    </Text>
+                    <Text style={styles.likeCount}>{likes}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <Text style={styles.sectionTitle}>
+                Komentáře {comments.length > 0 ? `(${comments.length})` : ''}
+              </Text>
+            </>
+          )}
+          ListEmptyComponent={
+            !loading ? <Text style={styles.empty}>Zatím žádné komentáře. Buďte první!</Text> : null
+          }
           renderItem={({ item }) => (
             <View style={styles.commentCard}>
-              <Text style={styles.commentAuthor}>{item.author_name}</Text>
-              <Text style={styles.commentText}>{item.body}</Text>
+              <View style={styles.commentHeader}>
+                <View style={styles.commentAvatar}>
+                  <Text style={styles.commentAvatarText}>{getInitials(item.author_name)}</Text>
+                </View>
+                <View>
+                  <Text style={styles.commentAuthor}>{item.author_name}</Text>
+                  <Text style={styles.commentDate}>{formatCZ(item.created_at)}</Text>
+                </View>
+              </View>
+              <Text style={styles.commentBody}>{item.body}</Text>
             </View>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>Zatím žádné komentáře.</Text>}
         />
-      )}
-      <View style={styles.commentInputContainer}>
-        <TextInput
-          style={styles.commentInput}
-          value={commentText}
-          onChangeText={setCommentText}
-          placeholder="Napsat komentář"
-          placeholderTextColor="#999"
-        />
-        <TouchableOpacity style={styles.commentButton} onPress={onSubmitComment}>
-          <Text style={styles.commentButtonText}>Odeslat</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.commentInput}
+            value={commentText}
+            onChangeText={setCommentText}
+            placeholder="Napsat komentář…"
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={onSubmitComment}>
+            <Text style={styles.sendButtonText}>Odeslat</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f3ee',
-    padding: 20,
-  },
-  backButton: {
-    marginBottom: 16,
-  },
-  backText: {
-    color: '#1a5c3a',
-    fontWeight: '600',
-  },
+  safeArea: { flex: 1, backgroundColor: '#ffffff' },
+  flex: { flex: 1 },
+  topBar: { paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  backText: { color: '#1a5c3a', fontWeight: '600', fontSize: 15 },
+  listContent: { padding: 20, paddingBottom: 10 },
+
   card: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 15,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#f3f3f3',
     shadowColor: '#000',
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.03,
     shadowRadius: 10,
     elevation: 2,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
+  authorRow: { flexDirection: 'row', alignItems: 'center' },
+  avatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#1a5c3a',
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: 10,
   },
-  category: {
-    color: '#1a5c3a',
-    fontWeight: '700',
-  },
-  likes: {
-    color: '#5a5a55',
-    fontSize: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 8,
-    color: '#1a1a18',
-  },
-  body: {
-    fontSize: 15,
-    color: '#333',
-    marginBottom: 12,
-  },
-  author: {
-    fontSize: 12,
-    color: '#5a5a55',
-    textAlign: 'right',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 12,
-  },
-  actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#dcdcdc',
-  },
-  actionButtonActive: {
-    backgroundColor: '#e8f4ed',
-    borderColor: '#1a5c3a',
-  },
-  actionText: {
-    color: '#5a5a55',
-    fontWeight: '700',
-  },
-  actionTextActive: {
-    color: '#1a5c3a',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 10,
-    color: '#1a5c3a',
-  },
+  avatarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  authorName: { fontSize: 15, fontWeight: '600', color: '#1a1a18' },
+  date: { color: '#8a8a82', fontSize: 11, marginTop: 1 },
+  categoryBadge: { backgroundColor: '#e8f4ed', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  categoryText: { color: '#1a5c3a', fontWeight: '600', fontSize: 11 },
+  title: { fontSize: 20, fontWeight: '700', color: '#1a1a18', marginBottom: 10 },
+  body: { fontSize: 15, color: '#444', lineHeight: 22, marginBottom: 14 },
+  likeRow: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 12 },
+  likeBtn: { flexDirection: 'row', alignItems: 'center' },
+  heartIcon: { fontSize: 20, marginRight: 6, color: '#999' },
+  heartActive: { color: '#e74c3c' },
+  likeCount: { fontSize: 14, fontWeight: '600', color: '#666' },
+
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1a5c3a', marginBottom: 12 },
+
   commentCard: {
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 14,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#f3f3f3',
   },
-  commentAuthor: {
-    fontWeight: '700',
-    marginBottom: 6,
-    color: '#1a5c3a',
+  commentHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  commentAvatar: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: '#edeae2',
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: 8,
   },
-  commentText: {
-    color: '#333',
-  },
-  empty: {
-    color: '#5a5a55',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  commentInputContainer: {
-    marginTop: 12,
+  commentAvatarText: { color: '#1a5c3a', fontWeight: '700', fontSize: 11 },
+  commentAuthor: { fontSize: 13, fontWeight: '600', color: '#1a1a18' },
+  commentDate: { fontSize: 10, color: '#8a8a82', marginTop: 1 },
+  commentBody: { fontSize: 14, color: '#444', lineHeight: 20 },
+
+  empty: { color: '#8a8a82', textAlign: 'center', marginTop: 20, fontSize: 14 },
+
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
   },
   commentInput: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#dcdcdc',
-    padding: 14,
-    marginBottom: 10,
+    flex: 1,
+    backgroundColor: '#f5f3ee',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    marginRight: 10,
   },
-  commentButton: {
+  sendButton: {
     backgroundColor: '#1a5c3a',
-    borderRadius: 14,
-    padding: 14,
-    alignItems: 'center',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
   },
-  commentButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
+  sendButtonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });
