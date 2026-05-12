@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, SafeAreaView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
-import { getCatches } from '../api/backend';
+import { getCatches, deleteCatch } from '../api/backend';
 // Importujeme mapování obrázků (vytvořili jsme ho v minulém kroku)
 import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
@@ -66,6 +66,26 @@ export default function CatchesScreen({ navigation }) {
       ? { uri: item.image_url } 
       : (FISH_IMAGES[imageKey] || FISH_IMAGES['default']);
 
+    function handleMenu() {
+      Alert.alert('Možnosti', null, [
+        { text: 'Editovat', onPress: () => navigation.navigate('AddCatch', { editCatch: item }) },
+        { text: 'Smazat', style: 'destructive', onPress: () => {
+          Alert.alert('Smazat úlovek', 'Opravdu chcete smazat tento úlovek?', [
+            { text: 'Zrušit', style: 'cancel' },
+            { text: 'Smazat', style: 'destructive', onPress: async () => {
+              try {
+                await deleteCatch(token, item.id);
+                setCatches(prev => prev.filter(c => c.id !== item.id));
+              } catch (err) {
+                Alert.alert('Chyba', 'Nelze smazat úlovek.');
+              }
+            }},
+          ]);
+        }},
+        { text: 'Zrušit', style: 'cancel' },
+      ]);
+    }
+
     return (
       <TouchableOpacity
         style={styles.card}
@@ -84,10 +104,17 @@ export default function CatchesScreen({ navigation }) {
             <Text style={styles.metaText}>{item.revir} • {new Date(item.caught_date).toLocaleDateString('cs-CZ')}</Text>
             {item.note ? <Text style={styles.noteText} numberOfLines={1}>“{item.note}”</Text> : null}
           </View>
-          <View style={styles.weightBadge}>
-            <Text style={styles.weightText}>
-              {item.weight_g >= 1000 ? `${(item.weight_g/1000).toFixed(2)} kg` : `${item.weight_g} g`}
-            </Text>
+          <View style={styles.rightColumn}>
+            <View style={styles.weightBadge}>
+              <Text style={styles.weightText}>
+                {item.weight_g >= 1000 ? `${(item.weight_g/1000).toFixed(2)} kg` : `${item.weight_g} g`}
+              </Text>
+            </View>
+            {user && item.user_id === user.id && (
+              <TouchableOpacity onPress={handleMenu} style={styles.menuBtn}>
+                <Text style={styles.menuDots}>⋮</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -199,6 +226,9 @@ const styles = StyleSheet.create({
   iconWrapper: { width: 55, height: 55, borderRadius: 12, backgroundColor: '#f9f9f9', justifyContent: 'center', alignItems: 'center' },
   icon: { width: '85%', height: '85%' },
   cardText: { flex: 1, marginLeft: 15 },
+  rightColumn: { alignItems: 'center' },
+  menuBtn: { padding: 4, marginTop: 4 },
+  menuDots: { fontSize: 18, fontWeight: '700', color: '#999' },
   speciesTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   metaText: { fontSize: 12, color: '#999', marginTop: 2 },
   noteText: { fontSize: 12, color: '#777', fontStyle: 'italic', marginTop: 4 },

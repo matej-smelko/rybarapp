@@ -38,6 +38,12 @@ export async function addCatch(token, payload) {
   return response.data;
 }
 
+export async function editCatch(token, catchId, payload) {
+  const response = await api.put(`/api/catches/${catchId}`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
 
 export async function getCatch(token, catchId) {
   const response = await api.get(`/api/catches/${catchId}`, {

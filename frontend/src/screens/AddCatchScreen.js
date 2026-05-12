@@ -2,26 +2,27 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { addCatch } from '../api/backend';
+import { addCatch, editCatch } from '../api/backend';
 import * as ImagePicker from 'expo-image-picker';
-import fishData from '../data/fish'; 
+import fishData from '../data/fish';
 
-export default function AddCatchScreen({ navigation }) {
+export default function AddCatchScreen({ route, navigation }) {
   const { token } = useAuth();
-  
+  const editData = route.params?.editCatch;
+
   // State pro formulář
-  const [species, setSpecies] = useState('');
-  const [weight, setWeight] = useState('');
-  const [length, setLength] = useState('');
-  const [revir, setRevir] = useState('Revír Ostravice č. 1');
-  const [bait, setBait] = useState('');
-  const [note, setNote] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); 
-  const [time, setTime] = useState(new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+  const [species, setSpecies] = useState(editData?.species || '');
+  const [weight, setWeight] = useState(editData?.weight_g?.toString() || '');
+  const [length, setLength] = useState(editData?.length_cm?.toString() || '');
+  const [revir, setRevir] = useState(editData?.revir || 'Revír Ostravice č. 1');
+  const [bait, setBait] = useState(editData?.bait || '');
+  const [note, setNote] = useState(editData?.note || '');
+  const [date, setDate] = useState(editData?.caught_date || new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState(editData?.caught_time || new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
   const [loading, setLoading] = useState(false);
-  
+
   // State pro foto a našeptávač
-  const [image, setImage] = useState(null); 
+  const [image, setImage] = useState(editData?.image_url || null);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -97,17 +98,31 @@ export default function AddCatchScreen({ navigation }) {
       }
 
       // 2. Uložení do DB na Railway
-      await addCatch(token, {
-        species,
-        weight_g: Number(weight),
-        length_cm: Number(length) || 0,
-        revir,
-        bait,
-        note,
-        caught_date: date,
-        caught_time: time,
-        image_url: finalImageUrl
-      });
+      if (editData) {
+        await editCatch(token, editData.id, {
+          species,
+          weight_g: Number(weight),
+          length_cm: Number(length) || 0,
+          revir,
+          bait,
+          note,
+          caught_date: date,
+          caught_time: time,
+          image_url: finalImageUrl
+        });
+      } else {
+        await addCatch(token, {
+          species,
+          weight_g: Number(weight),
+          length_cm: Number(length) || 0,
+          revir,
+          bait,
+          note,
+          caught_date: date,
+          caught_time: time,
+          image_url: finalImageUrl
+        });
+      }
 
       navigation.goBack();
     } catch (err) {
@@ -124,7 +139,7 @@ export default function AddCatchScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.modalTitle}>Zaznamenat úlovek</Text>
+        <Text style={styles.modalTitle}>{editData ? 'Upravit úlovek' : 'Zaznamenat úlovek'}</Text>
         <View style={{ width: 40 }} /> 
       </View>
 
@@ -226,7 +241,7 @@ export default function AddCatchScreen({ navigation }) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Zaznamenat úlovek</Text>
+              <Text style={styles.submitButtonText}>{editData ? 'Uložit změny' : 'Zaznamenat úlovek'}</Text>
             )}
           </TouchableOpacity>
         </View>

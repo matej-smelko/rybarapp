@@ -207,6 +207,22 @@ app.post('/api/catches', authMiddleware, async (req, res) => {
   }
 });
 
+app.put('/api/catches/:id', authMiddleware, async (req, res) => {
+  const { species, weight_g, length_cm, revir, bait, note, caught_date, caught_time, image_url } = req.body;
+  try {
+    const existing = await db.get('SELECT * FROM catches WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!existing) return res.status(404).json({ error: 'Úlovek nenalezen' });
+
+    await db.query(`UPDATE catches SET species=$1, weight_g=$2, length_cm=$3, revir=$4, bait=$5, note=$6, caught_date=$7, caught_time=$8, image_url=$9 WHERE id=$10`,
+      [species, weight_g, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '', image_url || '', req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 // ==================== FÓRUM ====================
 
 app.get('/api/posts', async (req, res) => {
