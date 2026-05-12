@@ -117,8 +117,17 @@ async function initDB() {
     // Migrace: přidání chybějících sloupců do comments (safe - nefailuje pokud už existuje)
     try { await db.query('ALTER TABLE comments ADD COLUMN likes_count INTEGER DEFAULT 0'); } catch {}
     try { await db.query('ALTER TABLE comments ADD COLUMN parent_id TEXT REFERENCES comments(id)'); } catch {}
+    // Migrace: přidání data narození do users
+    try { await db.query('ALTER TABLE users ADD COLUMN date_of_birth TEXT'); } catch {}
 
-    // Seed data
+    // Seed data - admin účet
+    const admin = await db.get('SELECT * FROM users WHERE email = $1', ['admin@rybarapp.cz']);
+    if (!admin) {
+      const hash = await bcrypt.hash('Admin123', 12);
+      await db.query('INSERT INTO users (id, name, email, password_hash, role, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6)',
+        ['admin1', 'Admin RybářApp', 'admin@rybarapp.cz', hash, 'admin', '1990-01-01']);
+      console.log('✓ Admin účet vytvořen (admin@rybarapp.cz / Admin123)');
+    }
     const defaultEmail = 'matej@example.com';
     const user = await db.get('SELECT * FROM users WHERE email = $1', [defaultEmail]);
     if (!user) {
@@ -137,14 +146,29 @@ initDB();
 // ==================== API ROUTES (Upraveno pro PostgreSQL $1, $2...) ====================
 
 app.post('/api/auth/register', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, password_confirmation, date_of_birth } = req.body;
+  if (!name || !email || !password || !password_confirmation || !date_of_birth) {
+    return res.status(400).json({ error: 'Vyplňte všechna povinná pole' });
+  }
+  if (password !== password_confirmation) {
+    return res.status(400).json({ error: 'Hesla se neshodují' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Heslo musí mít alespoň 8 znaků' });
+  }
+  if (!/[A-Z]/.test(password)) {
+    return res.status(400).json({ error: 'Heslo musí obsahovat alespoň jedno velké písmeno' });
+  }
+  if (!/[0-9]/.test(password)) {
+    return res.status(400).json({ error: 'Heslo musí obsahovat alespoň jedno číslo' });
+  }
   try {
     const hash = await bcrypt.hash(password, 12);
     const id = uuidv4();
-    await db.query('INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4)',
-      [id, name.trim(), email.toLowerCase().trim(), hash]);
+    await db.query('INSERT INTO users (id, name, email, password_hash, role, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6)',
+      [id, name.trim(), email.toLowerCase().trim(), hash, 'rybar', date_of_birth]);
     const token = jwt.sign({ id, name, email, role: 'rybar' }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, user: { id, name, email, role: 'rybar' } });
+    res.status(201).json({ token, user: { id, name, email, role: 'rybar', date_of_birth } });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'E-mail je již registrován' });
     res.status(500).json({ error: 'Chyba serveru' });
@@ -155,11 +179,11 @@ app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await db.get('SELECT * FROM users WHERE email = $1', [email.toLowerCase().trim()]);
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ error: 'Nesprávné údaje' });
-    }
-    const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+      if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+        return res.status(401).json({ error: 'Nesprávné údaje' });
+      }
+      const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+      res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, date_of_birth: user.date_of_birth } });
   } catch (err) {
     res.status(500).json({ error: 'Chyba serveru' });
   }

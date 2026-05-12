@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
   const { login, loading, error, setError } = useAuth();
-  const [email, setEmail] = useState('matej@example.com');
-  const [password, setPassword] = useState('rybar123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     return () => setError(null);

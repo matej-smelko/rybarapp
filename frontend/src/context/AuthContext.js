@@ -35,10 +35,10 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function register(name, email, password) {
+  async function register(name, email, password, password_confirmation, date_of_birth) {
     try {
       setLoading(true);
-      const data = await backend.register(name, email, password);
+      const data = await backend.register(name, email, password, password_confirmation, date_of_birth);
       setUser(data.user);
       setToken(data.token);
       setError(null);
