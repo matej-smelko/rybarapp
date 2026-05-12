@@ -90,11 +90,21 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   }
 
-  function renderComment(item, replyLevel) {
+  function getAllDescendants(commentId) {
+    const result = [];
+    const queue = [...(repliesByParent[commentId] || [])];
+    while (queue.length > 0) {
+      const c = queue.shift();
+      result.push(c);
+      queue.push(...(repliesByParent[c.id] || []));
+    }
+    return result;
+  }
+
+  function renderCommentCard(item, isReply) {
     const liked = item.liked === true;
-    const children = repliesByParent[item.id] || [];
     return (
-      <View key={item.id} style={[styles.commentCard, replyLevel > 0 && styles.commentReplyCard]}>
+      <View key={item.id} style={[styles.commentCard, isReply && styles.commentReplyCard]}>
         <View style={styles.commentHeader}>
           <View style={styles.commentAvatar}>
             <Text style={styles.commentAvatarText}>{getInitials(item.author_name)}</Text>
@@ -116,7 +126,6 @@ export default function PostDetailScreen({ route, navigation }) {
             <Text style={styles.replyBtn}>Odpovědět</Text>
           </TouchableOpacity>
         </View>
-        {children.map(r => renderComment(r, replyLevel + 1))}
       </View>
     );
   }
@@ -172,14 +181,32 @@ export default function PostDetailScreen({ route, navigation }) {
           ListEmptyComponent={
             !loading ? <Text style={styles.empty}>Zatím žádné komentáře. Buďte první!</Text> : null
           }
-          renderItem={({ item }) => renderComment(item, 0)}
+          renderItem={({ item }) => {
+            const thread = getAllDescendants(item.id);
+            return (
+              <View style={styles.commentGroup}>
+                {renderCommentCard(item, false)}
+                {thread.length > 0 && (
+                  <View style={styles.threadContainer}>
+                    <View style={styles.threadLine} />
+                    <View style={styles.threadItems}>
+                      {thread.map(r => renderCommentCard(r, true))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            );
+          }}
         />
 
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 10 }]}>
           {replyParentId ? (
-            <TouchableOpacity onPress={() => { setReplyParentId(null); setCommentText(''); }}>
-              <Text style={styles.cancelReply}>×</Text>
-            </TouchableOpacity>
+            <View style={styles.replyInfo}>
+              <TouchableOpacity onPress={() => { setReplyParentId(null); setCommentText(''); }}>
+                <Text style={styles.cancelReply}>×</Text>
+              </TouchableOpacity>
+              <Text style={styles.replyInfoText}>Odpovídáte</Text>
+            </View>
           ) : null}
           <TextInput
             style={styles.commentInput}
@@ -248,10 +275,13 @@ const styles = StyleSheet.create({
     borderColor: '#f3f3f3',
   },
   commentReplyCard: {
-    marginLeft: 20,
-    borderLeftWidth: 3,
-    borderLeftColor: '#1a5c3a',
+    borderLeftWidth: 0,
+    marginBottom: 6,
   },
+  commentGroup: { marginBottom: 10 },
+  threadContainer: { flexDirection: 'row' },
+  threadLine: { width: 2, backgroundColor: '#ddd', marginLeft: 16, marginRight: 10 },
+  threadItems: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   commentHeaderText: { flex: 1 },
   commentAvatar: {
@@ -270,7 +300,9 @@ const styles = StyleSheet.create({
   commentHeartActive: { color: '#e74c3c' },
   commentLikeCount: { fontSize: 12, fontWeight: '600', color: '#666' },
   replyBtn: { fontSize: 12, fontWeight: '600', color: '#1a5c3a' },
-  cancelReply: { fontSize: 22, color: '#999', marginRight: 8, paddingHorizontal: 4 },
+  replyInfo: { flexDirection: 'row', alignItems: 'center', marginRight: 8 },
+  replyInfoText: { fontSize: 11, color: '#1a5c3a', fontWeight: '600' },
+  cancelReply: { fontSize: 20, color: '#999', marginRight: 6, paddingHorizontal: 2 },
 
   empty: { color: '#8a8a82', textAlign: 'center', marginTop: 20, fontSize: 14 },
 
