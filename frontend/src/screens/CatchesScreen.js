@@ -32,22 +32,23 @@ export default function CatchesScreen({ navigation }) {
     }, [loadCatches])
   );
 
-  // Výpočty pro statistiky (ty horní 3 boxy)
-  const totals = useMemo(() => {
-    const totalWeight = catches.reduce((sum, item) => sum + Number(item.weight_g || 0), 0);
-    const heaviest = catches.reduce((max, item) => Math.max(max, Number(item.weight_g || 0)), 0);
-    return {
-      count: catches.length,
-      totalWeight: (totalWeight / 1000).toFixed(2),
-      heaviest: (heaviest / 1000).toFixed(2),
-    };
-  }, [catches]);
-
+  // Filtrování podle vybrané ryby
   const filteredCatches = useMemo(() => {
     return selectedSpecies === 'Vše'
       ? catches
       : catches.filter((item) => item.species === selectedSpecies);
   }, [catches, selectedSpecies]);
+
+  // Výpočty pro statistiky (podle aktuálního filtru)
+  const totals = useMemo(() => {
+    const totalWeight = filteredCatches.reduce((sum, item) => sum + Number(item.weight_g || 0), 0);
+    const heaviest = filteredCatches.reduce((max, item) => Math.max(max, Number(item.weight_g || 0)), 0);
+    return {
+      count: filteredCatches.length,
+      totalWeight: (totalWeight / 1000).toFixed(2),
+      heaviest: (heaviest / 1000).toFixed(2),
+    };
+  }, [filteredCatches]);
 
   const categories = useMemo(() => {
     const speciesList = [...new Set(catches.map(c => c.species))];
