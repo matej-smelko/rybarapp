@@ -355,6 +355,32 @@ app.post('/api/comments/:id/like', authMiddleware, async (req, res) => {
   }
 });
 
+app.delete('/api/comments/:id', authMiddleware, async (req, res) => {
+  try {
+    const comment = await db.get('SELECT * FROM comments WHERE id = $1', [req.params.id]);
+    if (!comment) return res.status(404).json({ error: 'Komentář nenalezen' });
+    if (comment.user_id !== req.user.id) return res.status(403).json({ error: 'Nemáte oprávnění' });
+
+    // Sběr všech potomků (libovolná hloubka)
+    const toDelete = [comment.id];
+    const queue = [comment.id];
+    while (queue.length > 0) {
+      const children = await db.all('SELECT id FROM comments WHERE parent_id = $1', [queue.shift()]);
+      for (const c of children) {
+        toDelete.push(c.id);
+        queue.push(c.id);
+      }
+    }
+
+    await db.query('DELETE FROM comment_likes WHERE comment_id = ANY($1)', [toDelete]);
+    await db.query('DELETE FROM comments WHERE id = ANY($1)', [toDelete]);
+    res.json({ success: true, deleted: toDelete });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);
 });

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { addComment, toggleLike, toggleCommentLike, getComments } from '../api/backend';
+import { addComment, toggleLike, toggleCommentLike, getComments, deleteComment } from '../api/backend';
 
 function formatCZ(dateStr) {
   if (!dateStr) return '';
@@ -19,7 +19,7 @@ function getInitials(name) {
 }
 
 export default function PostDetailScreen({ route, navigation }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { post } = route.params;
   const insets = useSafeAreaInsets();
   const [comments, setComments] = useState([]);
@@ -81,6 +81,28 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   }
 
+  function handleDeleteComment(commentId, authorName) {
+    Alert.alert(
+      'Smazat komentář',
+      `Opravdu chcete smazat komentář od ${authorName}?`,
+      [
+        { text: 'Zrušit', style: 'cancel' },
+        {
+          text: 'Smazat',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const result = await deleteComment(token, commentId);
+              setComments(prev => prev.filter(c => !result.deleted.includes(c.id)));
+            } catch (err) {
+              Alert.alert('Chyba', err.response?.data?.error || 'Nelze smazat komentář.');
+            }
+          },
+        },
+      ]
+    );
+  }
+
   const topLevelComments = comments.filter(c => !c.parent_id);
   const repliesByParent = {};
   for (const c of comments) {
@@ -125,6 +147,11 @@ export default function PostDetailScreen({ route, navigation }) {
           <TouchableOpacity onPress={() => onReply(item.author_name, item.id)}>
             <Text style={styles.replyBtn}>Odpovědět</Text>
           </TouchableOpacity>
+          {user && item.user_id === user.id && (
+            <TouchableOpacity onPress={() => handleDeleteComment(item.id, item.author_name)}>
+              <Text style={styles.deleteBtn}>Smazat</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
@@ -300,6 +327,7 @@ const styles = StyleSheet.create({
   commentHeartActive: { color: '#e74c3c' },
   commentLikeCount: { fontSize: 12, fontWeight: '600', color: '#666' },
   replyBtn: { fontSize: 12, fontWeight: '600', color: '#1a5c3a' },
+  deleteBtn: { fontSize: 12, fontWeight: '600', color: '#c0392b', marginLeft: 12 },
   replyInfo: { flexDirection: 'row', alignItems: 'center', marginRight: 8 },
   replyInfoText: { fontSize: 11, color: '#1a5c3a', fontWeight: '600' },
   cancelReply: { fontSize: 20, color: '#999', marginRight: 6, paddingHorizontal: 2 },

@@ -96,3 +96,10 @@ export async function toggleCommentLike(token, commentId) {
   });
   return response.data;
 }
+
+export async function deleteComment(token, commentId) {
+  const response = await api.delete(`/api/comments/${commentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
