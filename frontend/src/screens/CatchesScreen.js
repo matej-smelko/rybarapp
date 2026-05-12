@@ -105,16 +105,16 @@ export default function CatchesScreen({ navigation }) {
             {item.note ? <Text style={styles.noteText} numberOfLines={1}>“{item.note}”</Text> : null}
           </View>
           <View style={styles.rightColumn}>
-            <View style={styles.weightBadge}>
-              <Text style={styles.weightText}>
-                {item.weight_g >= 1000 ? `${(item.weight_g/1000).toFixed(2)} kg` : `${item.weight_g} g`}
-              </Text>
-            </View>
             {user && item.user_id === user.id && (
               <TouchableOpacity onPress={handleMenu} style={styles.menuBtn}>
                 <Text style={styles.menuDots}>⋮</Text>
               </TouchableOpacity>
             )}
+            <View style={styles.weightBadge}>
+              <Text style={styles.weightText}>
+                {item.weight_g >= 1000 ? `${(item.weight_g/1000).toFixed(2)} kg` : `${item.weight_g} g`}
+              </Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>

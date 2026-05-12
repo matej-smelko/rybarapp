@@ -8,10 +8,9 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   SafeAreaView, 
-  Alert 
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { getCatch, deleteCatch } from '../api/backend';
+import { getCatch } from '../api/backend';
 import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 export default function CatchDetailScreen({ route, navigation }) {
@@ -36,28 +35,6 @@ export default function CatchDetailScreen({ route, navigation }) {
     }
     loadCatch();
   }, [catchId]);
-
-  const handleDelete = () => {
-    Alert.alert(
-      "Smazat úlovek",
-      "Opravdu chcete tento záznam trvale odstranit?",
-      [
-        { text: "Zrušit", style: "cancel" },
-        { 
-          text: "Smazat", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              await deleteCatch(token, data.id);
-              navigation.goBack();
-            } catch (err) {
-              Alert.alert("Chyba", "Úlovek se nepodařilo smazat.");
-            }
-          } 
-        }
-      ]
-    );
-  };
 
   if (loading || !data) {
     return (
@@ -135,11 +112,6 @@ export default function CatchDetailScreen({ route, navigation }) {
           </View>
         ) : null}
 
-        {/* Tlačítko pro smazání */}
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Text style={styles.deleteButtonText}>Smazat úlovek</Text>
-        </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -190,19 +162,4 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 10, color: '#999', fontWeight: 'bold', marginBottom: 5 },
   infoValue: { fontSize: 17, color: '#333', fontWeight: '600' },
-
-  deleteButton: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 15,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ff4444',
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    color: '#ff4444',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
 });
