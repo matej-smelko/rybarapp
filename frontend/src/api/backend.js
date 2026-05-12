@@ -130,3 +130,31 @@ export async function editComment(token, commentId, body) {
   });
   return response.data;
 }
+
+// ==================== RYBY (Encyklopedie) ====================
+
+export async function getFish() {
+  const response = await api.get('/api/fish');
+  return response.data;
+}
+
+export async function addFish(token, payload) {
+  const response = await api.post('/api/fish', payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export async function updateFish(token, fishId, payload) {
+  const response = await api.put(`/api/fish/${fishId}`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export async function deleteFish(token, fishId) {
+  const response = await api.delete(`/api/fish/${fishId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}

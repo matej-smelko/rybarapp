@@ -120,6 +120,39 @@ async function initDB() {
     // Migrace: přidání data narození do users
     try { await db.query('ALTER TABLE users ADD COLUMN date_of_birth TEXT'); } catch {}
 
+    // Tabulka ryb pro encyklopedii
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS fish (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        latin TEXT,
+        mir TEXT,
+        maxSize TEXT,
+        maxLength TEXT,
+        depth TEXT,
+        habitat TEXT,
+        difficulty INTEGER DEFAULT 3,
+        season TEXT,
+        bait TEXT,
+        description TEXT,
+        tips TEXT,
+        record TEXT,
+        image TEXT
+      );
+    `);
+
+    // Seed ryb
+    const existingCount = await db.get('SELECT COUNT(*) AS cnt FROM fish');
+    if (parseInt(existingCount.cnt) === 0) {
+      const seedFish = require('./seed-fish.js');
+      for (const f of seedFish) {
+        await db.query(`INSERT INTO fish (id,name,latin,mir,maxSize,maxLength,depth,habitat,difficulty,season,bait,description,tips,record,image)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+          [f.id, f.name, f.latin||'', f.mir||'', f.maxSize||'', f.maxLength||'', f.depth||'', f.habitat||'', f.difficulty||3, JSON.stringify(f.season||[]), JSON.stringify(f.bait||[]), f.description||'', f.tips||'', f.record||'', f.image||'']);
+      }
+      console.log('✓ Ryby seedovány');
+    }
+
     // Seed data - admin účet
     const admin = await db.get('SELECT * FROM users WHERE email = $1', ['admin@rybarapp.cz']);
     if (!admin) {
@@ -479,6 +512,88 @@ app.put('/api/comments/:id', authMiddleware, async (req, res) => {
       [req.params.id]
     );
     res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+// ==================== RYBY (Encyklopedie) ====================
+
+const seedFish = require('./seed-fish.js');
+
+app.get('/api/fish', async (req, res) => {
+  try {
+    const rows = await db.all('SELECT * FROM fish ORDER BY name ASC');
+    for (const r of rows) {
+      if (typeof r.season === 'string') r.season = JSON.parse(r.season);
+      if (typeof r.bait === 'string') r.bait = JSON.parse(r.bait);
+    }
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.get('/api/fish/:id', async (req, res) => {
+  try {
+    const fish = await db.get('SELECT * FROM fish WHERE id = $1', [req.params.id]);
+    if (!fish) return res.status(404).json({ error: 'Ryba nenalezena' });
+    if (typeof fish.season === 'string') fish.season = JSON.parse(fish.season);
+    if (typeof fish.bait === 'string') fish.bait = JSON.parse(fish.bait);
+    res.json(fish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+function adminMiddleware(req, res, next) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Přístup pouze pro administrátora' });
+  }
+  next();
+}
+
+app.post('/api/fish', authMiddleware, adminMiddleware, async (req, res) => {
+  const { name, latin, mir, maxSize, maxLength, depth, habitat, difficulty, season, bait, description, tips, record, image } = req.body;
+  try {
+    const id = uuidv4();
+    await db.query(`INSERT INTO fish (id,name,latin,mir,maxSize,maxLength,depth,habitat,difficulty,season,bait,description,tips,record,image)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+      [id, name, latin, mir||'', maxSize||'', maxLength||'', depth||'', habitat||'', difficulty||3, JSON.stringify(season||[]), JSON.stringify(bait||[]), description||'', tips||'', record||'', image||'']);
+    const fish = await db.get('SELECT * FROM fish WHERE id = $1', [id]);
+    if (typeof fish.season === 'string') fish.season = JSON.parse(fish.season);
+    if (typeof fish.bait === 'string') fish.bait = JSON.parse(fish.bait);
+    res.status(201).json(fish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.put('/api/fish/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { name, latin, mir, maxSize, maxLength, depth, habitat, difficulty, season, bait, description, tips, record, image } = req.body;
+  try {
+    const existing = await db.get('SELECT * FROM fish WHERE id = $1', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Ryba nenalezena' });
+    await db.query(`UPDATE fish SET name=$1,latin=$2,mir=$3,maxSize=$4,maxLength=$5,depth=$6,habitat=$7,difficulty=$8,season=$9,bait=$10,description=$11,tips=$12,record=$13,image=$14 WHERE id=$15`,
+      [name, latin, mir||'', maxSize||'', maxLength||'', depth||'', habitat||'', difficulty||3, JSON.stringify(season||[]), JSON.stringify(bait||[]), description||'', tips||'', record||'', image||'', req.params.id]);
+    const fish = await db.get('SELECT * FROM fish WHERE id = $1', [req.params.id]);
+    if (typeof fish.season === 'string') fish.season = JSON.parse(fish.season);
+    if (typeof fish.bait === 'string') fish.bait = JSON.parse(fish.bait);
+    res.json(fish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.delete('/api/fish/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    await db.query('DELETE FROM fish WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Chyba serveru' });

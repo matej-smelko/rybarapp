@@ -1,12 +1,32 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-import fishData from '../data/fish';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { getFish } from '../api/backend';
+import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 const { width } = Dimensions.get('window');
 const cardWidth = Math.max((width - 60) / 2, 160);
 
 export default function EncyclopediaScreen({ navigation }) {
+  const { user } = useAuth();
+  const [fishData, setFishData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      async function load() {
+        setLoading(true);
+        try {
+          const data = await getFish();
+          setFishData(data);
+        } catch { setFishData([]); }
+        finally { setLoading(false); }
+      }
+      load();
+    }, [])
+  );
 
   const filteredFish = useMemo(() => {
     const lower = query.trim().toLowerCase();
@@ -14,7 +34,12 @@ export default function EncyclopediaScreen({ navigation }) {
     return fishData.filter((fish) =>
       fish.name.toLowerCase().includes(lower) || fish.latin.toLowerCase().includes(lower)
     );
-  }, [query]);
+  }, [query, fishData]);
+
+  function getImage(fish) {
+    const key = getFishImageKey(fish.name);
+    return FISH_IMAGES[key] || FISH_IMAGES['default'];
+  }
 
   return (
     <View style={styles.container}>
@@ -23,6 +48,11 @@ export default function EncyclopediaScreen({ navigation }) {
           <Text style={styles.header}>Encyklopedie ryb</Text>
           <Text style={styles.subheader}>{fishData.length} druhů</Text>
         </View>
+        {user?.role === 'admin' && (
+          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AdminFishForm')}>
+            <Text style={styles.addButtonText}>+ Ryba</Text>
+          </TouchableOpacity>
+        )}
       </View>
       <View style={styles.searchContainer}>
         <Text style={styles.searchIcon}>🔎</Text>
@@ -34,6 +64,9 @@ export default function EncyclopediaScreen({ navigation }) {
           onChangeText={setQuery}
         />
       </View>
+      {loading ? (
+        <ActivityIndicator style={styles.loader} color="#1a5c3a" size="large" />
+      ) : (
       <FlatList
         data={filteredFish}
         keyExtractor={(item) => item.id}
@@ -43,10 +76,10 @@ export default function EncyclopediaScreen({ navigation }) {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.card, { width: cardWidth }]}
-            onPress={() => navigation.navigate('FishDetail', { fish: item })}
+            onPress={() => navigation.navigate('FishDetail', { fishId: item.id, fish: item })}
           >
             <View style={styles.imageWrapper}>
-              <Image source={item.image} style={styles.image} resizeMode="contain" />
+              <Image source={getImage(item)} style={styles.image} resizeMode="contain" />
             </View>
             <Text style={styles.name}>{item.name}</Text>
             <Text style={styles.latin}>{item.latin}</Text>
@@ -68,6 +101,7 @@ export default function EncyclopediaScreen({ navigation }) {
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+      )}
     </View>
   );
 }
@@ -79,8 +113,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
+  addButton: { backgroundColor: '#1a5c3a', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 15 },
+  addButtonText: { color: '#fff', fontWeight: '700' },
   header: {
     fontSize: 26,
     fontWeight: '700',
@@ -186,4 +225,5 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 80,
   },
+  loader: { marginTop: 50 },
 });

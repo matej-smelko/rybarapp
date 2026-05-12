@@ -9,6 +9,7 @@ import CatchDetailScreen from '../screens/CatchDetailScreen';
 import AddPostScreen from '../screens/AddPostScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import FishDetailScreen from '../screens/FishDetailScreen';
+import AdminFishFormScreen from '../screens/AdminFishFormScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export default function AppNavigator() {
           <Stack.Screen name="AddPost" component={AddPostScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="FishDetail" component={FishDetailScreen} />
+          <Stack.Screen name="AdminFishForm" component={AdminFishFormScreen} />
         </>
       ) : (
         <>

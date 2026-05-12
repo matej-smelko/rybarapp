@@ -1,20 +1,53 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../context/AuthContext';
+import { deleteFish } from '../api/backend';
+import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 
 const MONTHS = ['L', 'Ú', 'B', 'D', 'K', 'Č', 'Č', 'S', 'Z', 'Ř', 'L', 'P'];
 
 export default function FishDetailScreen({ route, navigation }) {
-  const { fish } = route.params;
+  const { user, token } = useAuth();
+  const { fish: initialFish } = route.params;
+  const [fish, setFish] = useState(initialFish);
+
+  function getImage() {
+    const key = getFishImageKey(fish.name);
+    return FISH_IMAGES[key] || FISH_IMAGES['default'];
+  }
+
+  function handleMenu() {
+    Alert.alert('Možnosti', null, [
+      { text: 'Editovat', onPress: () => navigation.navigate('AdminFishForm', { editFish: fish }) },
+      { text: 'Smazat', style: 'destructive', onPress: () => {
+        Alert.alert('Smazat rybu', `Opravdu smazat ${fish.name}?`, [
+          { text: 'Zrušit', style: 'cancel' },
+          { text: 'Smazat', style: 'destructive', onPress: async () => {
+            try { await deleteFish(token, fish.id); navigation.goBack(); }
+            catch { Alert.alert('Chyba', 'Nelze smazat rybu.'); }
+          }},
+        ]);
+      }},
+      { text: 'Zrušit', style: 'cancel' },
+    ]);
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Zpět na seznam</Text>
-      </TouchableOpacity>
+        <View style={styles.backRow}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>← Zpět na seznam</Text>
+          </TouchableOpacity>
+          {user?.role === 'admin' && (
+            <TouchableOpacity onPress={handleMenu} style={styles.menuBtn}>
+              <Text style={styles.menuDots}>⋮</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       <View style={styles.heroCard}>
-        <Image source={fish.image} style={styles.heroImage} resizeMode="contain" />
+        <Image source={getImage()} style={styles.heroImage} resizeMode="contain" />
         <Text style={styles.title}>{fish.name}</Text>
         <Text style={styles.latin}>{fish.latin}</Text>
       </View>
@@ -116,6 +149,11 @@ const styles = StyleSheet.create({
   backButton: {
     marginBottom: 16,
   },
+  backRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16,
+  },
+  menuBtn: { padding: 4 },
+  menuDots: { fontSize: 20, fontWeight: '700', color: '#999' },
   backText: {
     color: '#1a5c3a',
     fontWeight: '700',
