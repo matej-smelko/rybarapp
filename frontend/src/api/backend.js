@@ -103,3 +103,10 @@ export async function deleteComment(token, commentId) {
   });
   return response.data;
 }
+
+export async function editComment(token, commentId, body) {
+  const response = await api.put(`/api/comments/${commentId}`, { body }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}

@@ -381,6 +381,28 @@ app.delete('/api/comments/:id', authMiddleware, async (req, res) => {
   }
 });
 
+app.put('/api/comments/:id', authMiddleware, async (req, res) => {
+  try {
+    const { body } = req.body;
+    if (!body || !body.trim()) {
+      return res.status(400).json({ error: 'Text komentáře je povinný' });
+    }
+    const comment = await db.get('SELECT * FROM comments WHERE id = $1', [req.params.id]);
+    if (!comment) return res.status(404).json({ error: 'Komentář nenalezen' });
+    if (comment.user_id !== req.user.id) return res.status(403).json({ error: 'Nemáte oprávnění' });
+
+    await db.query('UPDATE comments SET body = $1 WHERE id = $2', [body.trim(), req.params.id]);
+    const updated = await db.get(
+      'SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = $1',
+      [req.params.id]
+    );
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);
 });

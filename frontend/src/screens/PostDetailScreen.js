@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { addComment, toggleLike, toggleCommentLike, getComments, deleteComment } from '../api/backend';
+import { addComment, toggleLike, toggleCommentLike, getComments, deleteComment, editComment } from '../api/backend';
 
 function formatCZ(dateStr) {
   if (!dateStr) return '';
@@ -26,6 +26,8 @@ export default function PostDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [replyParentId, setReplyParentId] = useState(null);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editText, setEditText] = useState('');
   const [likes, setLikes] = useState(post.likes_count || 0);
   const [liked, setLiked] = useState(post.liked || false);
 
@@ -81,6 +83,36 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   }
 
+  async function handleSaveEdit(commentId) {
+    if (!editText.trim()) return;
+    try {
+      const result = await editComment(token, commentId, editText.trim());
+      setComments(prev => prev.map(c => (c.id === commentId ? { ...c, body: result.body } : c)));
+      setEditingCommentId(null);
+      setEditText('');
+    } catch (err) {
+      Alert.alert('Chyba', err.response?.data?.error || 'Nelze upravit komentář.');
+    }
+  }
+
+  function handleMenuPress(item) {
+    Alert.alert('Možnosti', null, [
+      {
+        text: 'Editovat',
+        onPress: () => {
+          setEditingCommentId(item.id);
+          setEditText(item.body);
+        },
+      },
+      {
+        text: 'Smazat',
+        style: 'destructive',
+        onPress: () => handleDeleteComment(item.id, item.author_name),
+      },
+      { text: 'Zrušit', style: 'cancel' },
+    ]);
+  }
+
   function handleDeleteComment(commentId, authorName) {
     Alert.alert(
       'Smazat komentář',
@@ -125,6 +157,7 @@ export default function PostDetailScreen({ route, navigation }) {
 
   function renderCommentCard(item, isReply) {
     const liked = item.liked === true;
+    const isEditing = editingCommentId === item.id;
     return (
       <View key={item.id} style={[styles.commentCard, isReply && styles.commentReplyCard]}>
         <View style={styles.commentHeader}>
@@ -135,23 +168,46 @@ export default function PostDetailScreen({ route, navigation }) {
             <Text style={styles.commentAuthor}>{item.author_name}</Text>
             <Text style={styles.commentDate}>{formatCZ(item.created_at)}</Text>
           </View>
-          {user && item.user_id === user.id && (
-            <TouchableOpacity onPress={() => handleDeleteComment(item.id, item.author_name)}>
+          {user && item.user_id === user.id && !isEditing && (
+            <TouchableOpacity onPress={() => handleMenuPress(item)}>
               <Text style={styles.menuDots}>⋮</Text>
             </TouchableOpacity>
           )}
         </View>
-        <Text style={styles.commentBody}>{item.body}</Text>
+        {isEditing ? (
+          <TextInput
+            style={styles.editInput}
+            value={editText}
+            onChangeText={setEditText}
+            multiline
+            placeholderTextColor="#999"
+          />
+        ) : (
+          <Text style={styles.commentBody}>{item.body}</Text>
+        )}
         <View style={styles.commentFooter}>
-          <TouchableOpacity style={styles.commentLikeBtn} onPress={() => handleCommentLike(item.id)}>
-            <Text style={[styles.commentHeart, liked && styles.commentHeartActive]}>
-              {liked ? '♥' : '♡'}
-            </Text>
-            <Text style={styles.commentLikeCount}>{item.likes_count || 0}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onReply(item.author_name, item.id)}>
-            <Text style={styles.replyBtn}>Odpovědět</Text>
-          </TouchableOpacity>
+          {isEditing ? (
+            <View style={styles.editActions}>
+              <TouchableOpacity onPress={() => setEditingCommentId(null)}>
+                <Text style={styles.cancelEditBtn}>Zrušit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleSaveEdit(item.id)}>
+                <Text style={styles.saveEditBtn}>Uložit</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.commentLikeBtn} onPress={() => handleCommentLike(item.id)}>
+                <Text style={[styles.commentHeart, liked && styles.commentHeartActive]}>
+                  {liked ? '♥' : '♡'}
+                </Text>
+                <Text style={styles.commentLikeCount}>{item.likes_count || 0}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => onReply(item.author_name, item.id)}>
+                <Text style={styles.replyBtn}>Odpovědět</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     );
@@ -321,7 +377,16 @@ const styles = StyleSheet.create({
   commentAuthor: { fontSize: 13, fontWeight: '600', color: '#1a1a18' },
   commentDate: { fontSize: 10, color: '#8a8a82', marginTop: 1 },
   commentBody: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 8 },
+  editInput: {
+    fontSize: 14, color: '#444', lineHeight: 20,
+    backgroundColor: '#f5f3ee', borderRadius: 10,
+    padding: 10, marginBottom: 8, textAlignVertical: 'top',
+    minHeight: 60,
+  },
   commentFooter: { flexDirection: 'row', alignItems: 'center' },
+  editActions: { flexDirection: 'row', alignItems: 'center' },
+  cancelEditBtn: { fontSize: 13, fontWeight: '600', color: '#999', marginRight: 16 },
+  saveEditBtn: { fontSize: 13, fontWeight: '700', color: '#1a5c3a' },
   commentLikeBtn: { flexDirection: 'row', alignItems: 'center', marginRight: 16 },
   commentHeart: { fontSize: 14, marginRight: 4, color: '#999' },
   commentHeartActive: { color: '#e74c3c' },
