@@ -615,6 +615,33 @@ app.delete('/api/fish/:id', authMiddleware, adminMiddleware, async (req, res) =>
   }
 });
 
+// ==================== ADMIN / UŽIVATELÉ ====================
+
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const users = await db.all(`
+      SELECT u.id, u.name, u.email, u.role, u.created_at,
+        (SELECT COUNT(*) FROM catches WHERE user_id = u.id) AS catch_count
+      FROM users u ORDER BY u.created_at DESC
+    `);
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.get('/api/admin/users/:id/catches', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const catches = await db.all('SELECT * FROM catches WHERE user_id = $1 ORDER BY caught_date DESC', [req.params.id]);
+    const user = await db.get('SELECT name, email FROM users WHERE id = $1', [req.params.id]);
+    res.json({ catches, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);
 });

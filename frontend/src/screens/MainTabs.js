@@ -7,12 +7,22 @@ import CatchesScreen from './CatchesScreen';
 import ForumScreen from './ForumScreen';
 import EncyclopediaScreen from './EncyclopediaScreen';
 import ProfileScreen from './ProfileScreen';
+import AdminUsersScreen from './AdminUsersScreen';
+
+const TAB_ICONS = {
+  'Úlovky': '🎣',
+  'Rybáři': '👥',
+  'Fórum': '💬',
+  'Encyklopedie': '📖',
+  'Profil': '👤',
+};
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs({ navigation }) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const isAdmin = user?.role === 'admin';
   const fullName = user?.name || 'Uživatel';
   const firstName = fullName.split(' ')[0];
   const initials = fullName
@@ -43,7 +53,7 @@ export default function MainTabs({ navigation }) {
       </View>
       <View style={styles.contentContainer}>
         <Tab.Navigator
-          screenOptions={{
+          screenOptions={({ route }) => ({
             headerShown: false,
             tabBarActiveTintColor: '#1a5c3a',
             tabBarInactiveTintColor: '#5a5a55',
@@ -58,17 +68,23 @@ export default function MainTabs({ navigation }) {
               paddingBottom: 15,
               backgroundColor: '#fff',
             },
-tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '700',
-            marginTop: -2,
-          },
-          tabBarIconStyle: {
-            marginTop: -4,
-          },
-          }}
+            tabBarLabelStyle: {
+              fontSize: 12,
+              fontWeight: '700',
+              marginTop: -2,
+            },
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
+                {TAB_ICONS[route.name]}
+              </Text>
+            ),
+          })}
         >
-          <Tab.Screen name="Úlovky" component={CatchesScreen} />
+          {isAdmin ? (
+            <Tab.Screen name="Rybáři" component={AdminUsersScreen} />
+          ) : (
+            <Tab.Screen name="Úlovky" component={CatchesScreen} />
+          )}
           <Tab.Screen name="Fórum" component={ForumScreen} />
           <Tab.Screen name="Encyklopedie" component={EncyclopediaScreen} />
           <Tab.Screen name="Profil" component={ProfileScreen} />

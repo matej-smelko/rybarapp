@@ -133,6 +133,22 @@ export async function editComment(token, commentId, body) {
 
 // ==================== PROFIL / STATISTIKY ====================
 
+// ==================== ADMIN / UŽIVATELÉ ====================
+
+export async function getAdminUsers(token) {
+  const response = await api.get('/api/admin/users', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export async function getAdminUserCatches(token, userId) {
+  const response = await api.get(`/api/admin/users/${userId}/catches`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
 export async function getUserStats(token) {
   const response = await api.get('/api/users/me/stats', {
     headers: { Authorization: `Bearer ${token}` },
