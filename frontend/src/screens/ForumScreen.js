@@ -65,7 +65,7 @@ export default function ForumScreen({ navigation }) {
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.header}>Fórum</Text>
-          <Text style={styles.caption}>Sdílej tipy, úlovky a zkušenosti s rybáři.</Text>
+          <Text style={styles.subheader}>Sdílej tipy, úlovky a zkušenosti s rybáři.</Text>
         </View>
         <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddPost')}>
           <Text style={styles.addButtonText}>+ Přidat</Text>
@@ -77,7 +77,7 @@ export default function ForumScreen({ navigation }) {
         <TextInput
           style={styles.searchInput}
           placeholder="Hledat v příspěvcích..."
-          placeholderTextColor="#8a8a82"
+          placeholderTextColor="#7f7f7a"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -135,9 +135,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   header: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
     color: '#1a5c3a',
+  },
+  subheader: {
+    marginTop: 4,
+    color: '#5a5a55',
+    fontSize: 14,
   },
   addButton: {
     backgroundColor: '#1a5c3a',
@@ -152,19 +157,20 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0ede7',
+    backgroundColor: '#edeae2',
     borderRadius: 24,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginBottom: 12,
+    paddingVertical: 12,
+    marginBottom: 18,
   },
   searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
+    fontSize: 16,
+    color: '#7f7f7a',
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: '#1a1a18',
     padding: 0,
   },
@@ -195,10 +201,7 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 40,
   },
-  caption: {
-    color: '#5a5a55',
-    marginBottom: 12,
-  },
+
   error: {
     marginTop: 20,
     color: '#c0392b',
