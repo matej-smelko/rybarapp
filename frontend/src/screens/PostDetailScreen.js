@@ -10,7 +10,7 @@ export default function PostDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [likes, setLikes] = useState(post.likes_count || 0);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.liked || false);
 
   useEffect(() => {
     async function loadComments() {

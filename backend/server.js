@@ -201,12 +201,26 @@ app.post('/api/catches', authMiddleware, async (req, res) => {
 
 app.get('/api/posts', async (req, res) => {
   try {
+    let userId = null;
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      try { userId = jwt.verify(auth.slice(7), JWT_SECRET).id; } catch {}
+    }
     const posts = await db.all(`
       SELECT p.*, u.name AS author_name
       FROM forum_posts p
       JOIN users u ON u.id = p.user_id
       ORDER BY p.created_at DESC
     `);
+    if (userId) {
+      const likedPostIds = new Set(
+        (await db.all('SELECT post_id FROM forum_likes WHERE user_id = $1', [userId]))
+          .map(r => r.post_id)
+      );
+      for (const post of posts) {
+        post.liked = likedPostIds.has(post.id);
+      }
+    }
     res.json({ posts });
   } catch (err) {
     console.error(err);
