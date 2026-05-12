@@ -135,6 +135,11 @@ export default function PostDetailScreen({ route, navigation }) {
             <Text style={styles.commentAuthor}>{item.author_name}</Text>
             <Text style={styles.commentDate}>{formatCZ(item.created_at)}</Text>
           </View>
+          {user && item.user_id === user.id && (
+            <TouchableOpacity onPress={() => handleDeleteComment(item.id, item.author_name)}>
+              <Text style={styles.menuDots}>⋮</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <Text style={styles.commentBody}>{item.body}</Text>
         <View style={styles.commentFooter}>
@@ -147,11 +152,6 @@ export default function PostDetailScreen({ route, navigation }) {
           <TouchableOpacity onPress={() => onReply(item.author_name, item.id)}>
             <Text style={styles.replyBtn}>Odpovědět</Text>
           </TouchableOpacity>
-          {user && item.user_id === user.id && (
-            <TouchableOpacity onPress={() => handleDeleteComment(item.id, item.author_name)}>
-              <Text style={styles.deleteBtn}>Smazat</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     );
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   commentHeartActive: { color: '#e74c3c' },
   commentLikeCount: { fontSize: 12, fontWeight: '600', color: '#666' },
   replyBtn: { fontSize: 12, fontWeight: '600', color: '#1a5c3a' },
-  deleteBtn: { fontSize: 12, fontWeight: '600', color: '#c0392b', marginLeft: 12 },
+  menuDots: { fontSize: 18, fontWeight: '700', color: '#999', paddingLeft: 8, paddingVertical: 2 },
   replyInfo: { flexDirection: 'row', alignItems: 'center', marginRight: 8 },
   replyInfoText: { fontSize: 11, color: '#1a5c3a', fontWeight: '600' },
   cancelReply: { fontSize: 20, color: '#999', marginRight: 6, paddingHorizontal: 2 },
