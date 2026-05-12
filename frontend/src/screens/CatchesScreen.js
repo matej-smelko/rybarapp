@@ -99,7 +99,10 @@ export default function CatchesScreen({ navigation }) {
       <View style={styles.container}>
         {/* TITULEK + PŘIDAT */}
         <View style={styles.titleRow}>
-          <Text style={styles.header}>Moje úlovky</Text>
+          <View>
+            <Text style={styles.header}>Moje úlovky</Text>
+            <Text style={styles.subheader}>Přehled tvých úlovků</Text>
+          </View>
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddCatch')}>
             <Text style={styles.addButtonText}>+ Přidat</Text>
           </TouchableOpacity>
@@ -169,7 +172,8 @@ const styles = StyleSheet.create({
 
   container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#fff' },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20 },
-  header: { fontSize: 26, fontWeight: 'bold', color: '#001a1a' },
+  header: { fontSize: 26, fontWeight: '700', color: '#1a5c3a' },
+  subheader: { marginTop: 4, color: '#5a5a55', fontSize: 14 },
   addButton: { backgroundColor: '#1a5c3a', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 15 },
   addButtonText: { color: '#fff', fontWeight: 'bold' },
 

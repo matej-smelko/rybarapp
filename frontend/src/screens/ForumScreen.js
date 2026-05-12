@@ -83,16 +83,21 @@ export default function ForumScreen({ navigation }) {
         />
       </View>
 
-      <View style={styles.chipRow}>
-        {CATEGORIES.map(cat => (
-          <TouchableOpacity
-            key={cat}
-            style={[styles.chip, categoryFilter === cat && styles.chipActive]}
-            onPress={() => setCategoryFilter(cat)}
-          >
-            <Text style={[styles.chipText, categoryFilter === cat && styles.chipTextActive]}>{cat}</Text>
-          </TouchableOpacity>
-        ))}
+      <View style={{ marginBottom: 16 }}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={CATEGORIES}
+          keyExtractor={item => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.chip, categoryFilter === item && styles.chipActive]}
+              onPress={() => setCategoryFilter(item)}
+            >
+              <Text style={[styles.chipText, categoryFilter === item && styles.chipTextActive]}>{item}</Text>
+            </TouchableOpacity>
+          )}
+        />
       </View>
 
       {loading ? (
@@ -174,29 +179,26 @@ const styles = StyleSheet.create({
     color: '#1a1a18',
     padding: 0,
   },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 16,
-    gap: 8,
-  },
   chip: {
+    paddingHorizontal: 15,
     paddingVertical: 8,
-    paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: '#f0ede7',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginRight: 10,
   },
   chipActive: {
     backgroundColor: '#1a5c3a',
+    borderColor: '#1a5c3a',
   },
   chipText: {
-    fontSize: 13,
+    color: '#666',
     fontWeight: '500',
-    color: '#5a5a55',
+    fontSize: 13,
   },
   chipTextActive: {
     color: '#fff',
-    fontWeight: '600',
   },
   loader: {
     marginTop: 40,
