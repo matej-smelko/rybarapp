@@ -207,7 +207,8 @@ app.get('/api/posts', async (req, res) => {
       try { userId = jwt.verify(auth.slice(7), JWT_SECRET).id; } catch {}
     }
     const posts = await db.all(`
-      SELECT p.*, u.name AS author_name
+      SELECT p.*, u.name AS author_name,
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comments_count
       FROM forum_posts p
       JOIN users u ON u.id = p.user_id
       ORDER BY p.created_at DESC
