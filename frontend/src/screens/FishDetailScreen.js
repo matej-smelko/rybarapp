@@ -6,7 +6,6 @@ import { FISH_IMAGES, getFishImageKey } from '../img/fishImages';
 const MONTHS = ['L', 'Ú', 'B', 'D', 'K', 'Č', 'Č', 'S', 'Z', 'Ř', 'L', 'P'];
 
 export default function FishDetailScreen({ route, navigation }) {
-  const { user } = useAuth();
   const { fish: initialFish } = route.params;
   const [fish, setFish] = useState(initialFish);
 
