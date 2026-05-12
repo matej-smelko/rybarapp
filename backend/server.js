@@ -200,7 +200,7 @@ app.post('/api/catches', authMiddleware, async (req, res) => {
     const id = uuidv4();
     await db.query(`INSERT INTO catches (id, user_id, species, weight_g, length_cm, revir, bait, note, caught_date, caught_time, image_url)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [id, req.user.id, species, weight_g, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '', image_url || '']);
+      [id, req.user.id, species, weight_g || 0, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '', image_url || '']);
     res.status(201).json({ id, species });
   } catch (err) {
     res.status(500).json({ error: 'Chyba serveru' });
@@ -214,7 +214,7 @@ app.put('/api/catches/:id', authMiddleware, async (req, res) => {
     if (!existing) return res.status(404).json({ error: 'Úlovek nenalezen' });
 
     await db.query(`UPDATE catches SET species=$1, weight_g=$2, length_cm=$3, revir=$4, bait=$5, note=$6, caught_date=$7, caught_time=$8, image_url=$9 WHERE id=$10`,
-      [species, weight_g, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '', image_url || '', req.params.id]
+      [species, weight_g || 0, length_cm || 0, revir, bait || '', note || '', caught_date, caught_time || '', image_url || '', req.params.id]
     );
     res.json({ success: true });
   } catch (err) {

@@ -83,6 +83,10 @@ export default function AddCatchScreen({ route, navigation }) {
     }
   };
 
+  function parseKg(val) {
+    return Math.round(Number(String(val).replace(',', '.')) * 1000) || 0;
+  }
+
   async function onSubmit() {
     if (!species || !weight || !revir || !date) {
       return Alert.alert('Chyba', 'Vyplňte povinná pole (druh, váha, revír a datum).');
@@ -101,7 +105,7 @@ export default function AddCatchScreen({ route, navigation }) {
       if (editData) {
         await editCatch(token, editData.id, {
           species,
-          weight_g: Math.round(Number(weight) * 1000),
+          weight_g: parseKg(weight),
           length_cm: Number(length) || 0,
           revir,
           bait,
@@ -113,7 +117,7 @@ export default function AddCatchScreen({ route, navigation }) {
       } else {
         await addCatch(token, {
           species,
-          weight_g: Math.round(Number(weight) * 1000),
+          weight_g: parseKg(weight),
           length_cm: Number(length) || 0,
           revir,
           bait,
