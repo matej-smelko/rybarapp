@@ -177,27 +177,27 @@ export default function AdminUsersScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fcfcfc',
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#fff',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 4,
+    marginBottom: 16,
   },
   header: {
     fontSize: 26,
-    fontWeight: '800',
-    color: '#1a1a18',
+    fontWeight: '700',
+    color: '#1a5c3a',
   },
   subheader: {
     fontSize: 14,
-    color: '#7f7f7a',
+    color: '#5a5a55',
     marginBottom: 20,
     marginTop: 4,
   },
@@ -207,9 +207,9 @@ const styles = StyleSheet.create({
   },
   exportButton: {
     backgroundColor: '#1a5c3a',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
   },
   exportText: {
     color: '#fff',
