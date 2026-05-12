@@ -108,7 +108,7 @@ export default function FishDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: '#ffffff',
   },
   content: {
     padding: 20,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroCard: {
-    backgroundColor: '#edf6ea',
+    backgroundColor: '#e8f4ed',
     borderRadius: 24,
     padding: 24,
     marginBottom: 24,
@@ -157,8 +157,8 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: '#edeae2',
+    borderRadius: 15,
     padding: 14,
     marginBottom: 12,
   },
@@ -188,27 +188,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1a5c3a',
   },
-  rowInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  infoCard: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 14,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: '#5a5a55',
-    marginBottom: 6,
-  },
-  infoValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1a5c3a',
-  },
+
   text: {
     fontSize: 15,
     color: '#333',
@@ -224,7 +204,7 @@ const styles = StyleSheet.create({
   seasonItem: {
     width: 30,
     height: 30,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -235,7 +215,7 @@ const styles = StyleSheet.create({
     borderColor: '#1a5c3a',
   },
   seasonInactive: {
-    backgroundColor: '#f2f2ea',
+    backgroundColor: '#edeae2',
   },
   seasonItemText: {
     fontSize: 12,
@@ -262,9 +242,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a5c3a',
   },
   legendInactive: {
-    backgroundColor: '#f2f2ea',
+    backgroundColor: '#edeae2',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#e3e3dc',
   },
   legendText: {
     fontSize: 12,
@@ -276,7 +256,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   chip: {
-    backgroundColor: '#f5f6f1',
+    backgroundColor: '#edeae2',
     borderRadius: 14,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -289,9 +269,11 @@ const styles = StyleSheet.create({
   },
   box: {
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: 15,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#f3f3f3',
   },
   boxText: {
     fontSize: 15,
