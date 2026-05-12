@@ -131,6 +131,15 @@ export async function editComment(token, commentId, body) {
   return response.data;
 }
 
+// ==================== PROFIL / STATISTIKY ====================
+
+export async function getUserStats(token) {
+  const response = await api.get('/api/users/me/stats', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
 // ==================== RYBY (Encyklopedie) ====================
 
 export async function getFish() {

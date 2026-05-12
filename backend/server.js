@@ -222,6 +222,21 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.get('/api/users/me/stats', authMiddleware, async (req, res) => {
+  try {
+    const catches = await db.get('SELECT COUNT(*) AS cnt FROM catches WHERE user_id = $1', [req.user.id]);
+    const posts = await db.get('SELECT COUNT(*) AS cnt FROM forum_posts WHERE user_id = $1', [req.user.id]);
+    const comments = await db.get('SELECT COUNT(*) AS cnt FROM comments WHERE user_id = $1', [req.user.id]);
+    res.json({
+      catches: parseInt(catches.cnt) || 0,
+      posts: parseInt(posts.cnt) || 0,
+      comments: parseInt(comments.cnt) || 0,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 app.get('/api/catches', authMiddleware, async (req, res) => {
   try {
     const catches = await db.all('SELECT * FROM catches WHERE user_id = $1 ORDER BY caught_date DESC', [req.user.id]);
