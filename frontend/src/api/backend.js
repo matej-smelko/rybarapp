@@ -76,8 +76,8 @@ export async function getComments(token, postId) {
   return response.data;
 }
 
-export async function addComment(token, postId, body) {
-  const response = await api.post(`/api/posts/${postId}/comments`, { body }, {
+export async function addComment(token, postId, body, parent_id) {
+  const response = await api.post(`/api/posts/${postId}/comments`, { body, parent_id }, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;

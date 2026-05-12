@@ -114,6 +114,9 @@ async function initDB() {
       );
     `);
 
+    // Migrace: přidání parent_id pro vnořené komentáře (safe - nefailuje pokud už existuje)
+    try { await db.query('ALTER TABLE comments ADD COLUMN parent_id TEXT REFERENCES comments(id)'); } catch {}
+
     // Seed data
     const defaultEmail = 'matej@example.com';
     const user = await db.get('SELECT * FROM users WHERE email = $1', [defaultEmail]);
@@ -307,15 +310,15 @@ app.get('/api/posts/:id/comments', async (req, res) => {
 });
 
 app.post('/api/posts/:id/comments', authMiddleware, async (req, res) => {
-  const { body } = req.body;
+  const { body, parent_id } = req.body;
   if (!body || !body.trim()) {
     return res.status(400).json({ error: 'Text komentáře je povinný' });
   }
   try {
     const id = uuidv4();
     await db.query(
-      'INSERT INTO comments (id, post_id, user_id, body) VALUES ($1, $2, $3, $4)',
-      [id, req.params.id, req.user.id, body.trim()]
+      'INSERT INTO comments (id, post_id, user_id, body, parent_id) VALUES ($1, $2, $3, $4, $5)',
+      [id, req.params.id, req.user.id, body.trim(), parent_id || null]
     );
     const comment = await db.get(
       'SELECT c.*, u.name AS author_name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = $1',

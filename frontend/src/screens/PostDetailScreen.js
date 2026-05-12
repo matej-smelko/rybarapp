@@ -25,6 +25,7 @@ export default function PostDetailScreen({ route, navigation }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
+  const [replyParentId, setReplyParentId] = useState(null);
   const [likes, setLikes] = useState(post.likes_count || 0);
   const [liked, setLiked] = useState(post.liked || false);
 
@@ -42,16 +43,18 @@ export default function PostDetailScreen({ route, navigation }) {
     loadComments();
   }, [post.id, token]);
 
-  function onReply(authorName) {
+  function onReply(authorName, parentId) {
+    setReplyParentId(parentId);
     setCommentText(`@${authorName} `);
   }
 
   async function onSubmitComment() {
     if (!commentText.trim()) return;
     try {
-      const result = await addComment(token, post.id, commentText.trim());
+      const result = await addComment(token, post.id, commentText.trim(), replyParentId);
       setComments((prev) => [...prev, result]);
       setCommentText('');
+      setReplyParentId(null);
     } catch (err) {
       Alert.alert('Chyba', err.response?.data?.error || 'Nelze odeslat komentář.');
     }
@@ -73,7 +76,47 @@ export default function PostDetailScreen({ route, navigation }) {
           ? { ...c, liked: result.liked, likes_count: (c.likes_count || 0) + (result.liked ? 1 : -1) }
           : c
       ));
-    } catch {}
+    } catch (err) {
+      Alert.alert('Chyba', err.response?.data?.error || err.message || 'Nelze lajkovat komentář.');
+    }
+  }
+
+  const topLevelComments = comments.filter(c => !c.parent_id);
+  const repliesByParent = {};
+  for (const c of comments) {
+    if (c.parent_id) {
+      if (!repliesByParent[c.parent_id]) repliesByParent[c.parent_id] = [];
+      repliesByParent[c.parent_id].push(c);
+    }
+  }
+
+  function renderComment(item, isReply) {
+    return (
+      <View key={item.id} style={[styles.commentCard, isReply && styles.commentReplyCard]}>
+        <View style={styles.commentHeader}>
+          <View style={styles.commentAvatar}>
+            <Text style={styles.commentAvatarText}>{getInitials(item.author_name)}</Text>
+          </View>
+          <View style={styles.commentHeaderText}>
+            <Text style={styles.commentAuthor}>{item.author_name}</Text>
+            <Text style={styles.commentDate}>{formatCZ(item.created_at)}</Text>
+          </View>
+        </View>
+        <Text style={styles.commentBody}>{item.body}</Text>
+        <View style={styles.commentFooter}>
+          <TouchableOpacity style={styles.commentLikeBtn} onPress={() => handleCommentLike(item.id)}>
+            <Text style={[styles.commentHeart, item.liked && styles.commentHeartActive]}>
+              {item.liked ? '♥' : '♡'}
+            </Text>
+            <Text style={styles.commentLikeCount}>{item.likes_count || 0}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onReply(item.author_name, item.id)}>
+            <Text style={styles.replyBtn}>Odpovědět</Text>
+          </TouchableOpacity>
+        </View>
+        {!isReply && repliesByParent[item.id] && repliesByParent[item.id].map(r => renderComment(r, true))}
+      </View>
+    );
   }
 
   return (
@@ -88,7 +131,7 @@ export default function PostDetailScreen({ route, navigation }) {
         <FlatList
           style={styles.flex}
           contentContainerStyle={styles.listContent}
-          data={comments}
+          data={topLevelComments}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={() => (
             <>
@@ -127,39 +170,20 @@ export default function PostDetailScreen({ route, navigation }) {
           ListEmptyComponent={
             !loading ? <Text style={styles.empty}>Zatím žádné komentáře. Buďte první!</Text> : null
           }
-          renderItem={({ item }) => (
-            <View style={styles.commentCard}>
-              <View style={styles.commentHeader}>
-                <View style={styles.commentAvatar}>
-                  <Text style={styles.commentAvatarText}>{getInitials(item.author_name)}</Text>
-                </View>
-                <View style={styles.commentHeaderText}>
-                  <Text style={styles.commentAuthor}>{item.author_name}</Text>
-                  <Text style={styles.commentDate}>{formatCZ(item.created_at)}</Text>
-                </View>
-              </View>
-              <Text style={styles.commentBody}>{item.body}</Text>
-              <View style={styles.commentFooter}>
-                <TouchableOpacity style={styles.commentLikeBtn} onPress={() => handleCommentLike(item.id)}>
-                  <Text style={[styles.commentHeart, item.liked && styles.commentHeartActive]}>
-                    {item.liked ? '♥' : '♡'}
-                  </Text>
-                  <Text style={styles.commentLikeCount}>{item.likes_count || 0}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => onReply(item.author_name)}>
-                  <Text style={styles.replyBtn}>Odpovědět</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
+          renderItem={({ item }) => renderComment(item, false)}
         />
 
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 10 }]}>
+          {replyParentId ? (
+            <TouchableOpacity onPress={() => { setReplyParentId(null); setCommentText(''); }}>
+              <Text style={styles.cancelReply}>×</Text>
+            </TouchableOpacity>
+          ) : null}
           <TextInput
             style={styles.commentInput}
             value={commentText}
             onChangeText={setCommentText}
-            placeholder="Napsat komentář…"
+            placeholder={replyParentId ? 'Napsat odpověď…' : 'Napsat komentář…'}
             placeholderTextColor="#999"
           />
           <TouchableOpacity style={styles.sendButton} onPress={onSubmitComment}>
@@ -221,6 +245,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f3f3f3',
   },
+  commentReplyCard: {
+    marginLeft: 20,
+    borderLeftWidth: 3,
+    borderLeftColor: '#1a5c3a',
+  },
   commentHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   commentHeaderText: { flex: 1 },
   commentAvatar: {
@@ -239,6 +268,7 @@ const styles = StyleSheet.create({
   commentHeartActive: { color: '#e74c3c' },
   commentLikeCount: { fontSize: 12, fontWeight: '600', color: '#666' },
   replyBtn: { fontSize: 12, fontWeight: '600', color: '#1a5c3a' },
+  cancelReply: { fontSize: 22, color: '#999', marginRight: 8, paddingHorizontal: 4 },
 
   empty: { color: '#8a8a82', textAlign: 'center', marginTop: 20, fontSize: 14 },
 
