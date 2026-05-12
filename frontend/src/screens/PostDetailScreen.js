@@ -73,7 +73,7 @@ export default function PostDetailScreen({ route, navigation }) {
       const result = await toggleCommentLike(token, commentId);
       setComments(prev => prev.map(c =>
         c.id === commentId
-          ? { ...c, liked: result.liked, likes_count: (c.likes_count || 0) + (result.liked ? 1 : -1) }
+          ? { ...c, liked: result.liked, likes_count: Math.max(0, (c.likes_count || 0) + (result.liked ? 1 : -1)) }
           : c
       ));
     } catch (err) {
@@ -90,9 +90,11 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   }
 
-  function renderComment(item, isReply) {
+  function renderComment(item, replyLevel) {
+    const liked = item.liked === true;
+    const children = repliesByParent[item.id] || [];
     return (
-      <View key={item.id} style={[styles.commentCard, isReply && styles.commentReplyCard]}>
+      <View key={item.id} style={[styles.commentCard, replyLevel > 0 && styles.commentReplyCard]}>
         <View style={styles.commentHeader}>
           <View style={styles.commentAvatar}>
             <Text style={styles.commentAvatarText}>{getInitials(item.author_name)}</Text>
@@ -105,8 +107,8 @@ export default function PostDetailScreen({ route, navigation }) {
         <Text style={styles.commentBody}>{item.body}</Text>
         <View style={styles.commentFooter}>
           <TouchableOpacity style={styles.commentLikeBtn} onPress={() => handleCommentLike(item.id)}>
-            <Text style={[styles.commentHeart, item.liked && styles.commentHeartActive]}>
-              {item.liked ? '♥' : '♡'}
+            <Text style={[styles.commentHeart, liked && styles.commentHeartActive]}>
+              {liked ? '♥' : '♡'}
             </Text>
             <Text style={styles.commentLikeCount}>{item.likes_count || 0}</Text>
           </TouchableOpacity>
@@ -114,7 +116,7 @@ export default function PostDetailScreen({ route, navigation }) {
             <Text style={styles.replyBtn}>Odpovědět</Text>
           </TouchableOpacity>
         </View>
-        {!isReply && repliesByParent[item.id] && repliesByParent[item.id].map(r => renderComment(r, true))}
+        {children.map(r => renderComment(r, replyLevel + 1))}
       </View>
     );
   }
@@ -170,7 +172,7 @@ export default function PostDetailScreen({ route, navigation }) {
           ListEmptyComponent={
             !loading ? <Text style={styles.empty}>Zatím žádné komentáře. Buďte první!</Text> : null
           }
-          renderItem={({ item }) => renderComment(item, false)}
+          renderItem={({ item }) => renderComment(item, 0)}
         />
 
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 10 }]}>
