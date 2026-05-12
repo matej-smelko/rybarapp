@@ -57,7 +57,7 @@ export default function AddPostScreen({ navigation }) {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>NADPIS *</Text>
-          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="O čem chcete psát?" editable={!loading} />
+          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="O čem chcete psát?" placeholderTextColor="#999" editable={!loading} />
         </View>
 
         <View style={styles.inputGroup}>
@@ -67,6 +67,7 @@ export default function AddPostScreen({ navigation }) {
             value={body}
             onChangeText={setBody}
             placeholder="Napište svůj příspěvek…"
+            placeholderTextColor="#999"
             multiline
             editable={!loading}
           />

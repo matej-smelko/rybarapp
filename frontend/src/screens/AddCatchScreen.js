@@ -148,6 +148,7 @@ export default function AddCatchScreen({ navigation }) {
             value={species} 
             onChangeText={handleSpeciesChange} 
             placeholder="Kapr obecný..." 
+            placeholderTextColor="#999"
             editable={!loading}
           />
           {showSuggestions && suggestions.length > 0 && (
@@ -171,33 +172,33 @@ export default function AddCatchScreen({ navigation }) {
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>VÁHA (G) *</Text>
-            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="3200" keyboardType="numeric" editable={!loading} />
+            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="3200" placeholderTextColor="#999" keyboardType="numeric" editable={!loading} />
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.label}>DÉLKA (CM)</Text>
-            <TextInput style={styles.input} value={length} onChangeText={setLength} placeholder="58" keyboardType="numeric" editable={!loading} />
+            <TextInput style={styles.input} value={length} onChangeText={setLength} placeholder="58" placeholderTextColor="#999" keyboardType="numeric" editable={!loading} />
           </View>
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>REVÍR *</Text>
-          <TextInput style={styles.input} value={revir} onChangeText={setRevir} placeholder="Název revíru" editable={!loading} />
+          <TextInput style={styles.input} value={revir} onChangeText={setRevir} placeholder="Název revíru" placeholderTextColor="#999" editable={!loading} />
         </View>
 
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>DATUM *</Text>
-            <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" editable={!loading} />
+            <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" placeholderTextColor="#999" editable={!loading} />
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.label}>ČAS</Text>
-            <TextInput style={styles.input} value={time} onChangeText={setTime} placeholder="HH:MM" editable={!loading} />
+            <TextInput style={styles.input} value={time} onChangeText={setTime} placeholder="HH:MM" placeholderTextColor="#999" editable={!loading} />
           </View>
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>NÁSTRAHA</Text>
-          <TextInput style={styles.input} value={bait} onChangeText={setBait} placeholder="Kukuřice, wobler..." editable={!loading} />
+          <TextInput style={styles.input} value={bait} onChangeText={setBait} placeholder="Kukuřice, wobler..." placeholderTextColor="#999" editable={!loading} />
         </View>
 
         <View style={styles.inputGroup}>
@@ -207,6 +208,7 @@ export default function AddCatchScreen({ navigation }) {
             value={note}
             onChangeText={setNote}
             placeholder="Volitelná poznámka..."
+            placeholderTextColor="#999"
             multiline
             editable={!loading}
           />

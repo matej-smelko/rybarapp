@@ -88,6 +88,7 @@ export default function PostDetailScreen({ route, navigation }) {
           value={commentText}
           onChangeText={setCommentText}
           placeholder="Napsat komentář"
+          placeholderTextColor="#999"
         />
         <TouchableOpacity style={styles.commentButton} onPress={onSubmitComment}>
           <Text style={styles.commentButtonText}>Odeslat</Text>

@@ -20,16 +20,17 @@ export default function RegisterScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Registrovat</Text>
       <Text style={styles.subtitle}>Vytvořte nový účet pro správu úlovků</Text>
-      <TextInput style={styles.input} placeholder="Jméno" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Jméno" placeholderTextColor="#999" value={name} onChangeText={setName} />
       <TextInput
         style={styles.input}
         placeholder="E-mail"
+        placeholderTextColor="#999"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput style={styles.input} placeholder="Heslo" secureTextEntry value={password} onChangeText={setPassword} />
+      <TextInput style={styles.input} placeholder="Heslo" placeholderTextColor="#999" secureTextEntry value={password} onChangeText={setPassword} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={onSubmit} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Registrovat</Text>}
