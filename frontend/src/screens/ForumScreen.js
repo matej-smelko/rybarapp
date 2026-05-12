@@ -120,7 +120,7 @@ export default function ForumScreen({ navigation }) {
               <Text style={styles.body} numberOfLines={3}>{item.body}</Text>
             </TouchableOpacity>
           )}
-          ItemSeparatorComponent={() => <View style={styles.divider} />}
+          contentContainerStyle={styles.listContent}
         />
       )}
     </View>
@@ -209,6 +209,9 @@ const styles = StyleSheet.create({
     color: '#c0392b',
     fontSize: 15,
   },
+  listContent: {
+    paddingBottom: 20,
+  },
   empty: {
     marginTop: 20,
     color: '#5a5a55',
@@ -216,12 +219,15 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: 15,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f3f3f3',
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -245,7 +251,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
-  divider: {
-    height: 12,
-  },
+
 });
