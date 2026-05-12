@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
 
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   statCard: { 
-    backgroundColor: '#f8f8f8', width: '31%', paddingVertical: 15, borderRadius: 15, alignItems: 'center',
+    backgroundColor: '#edeae2', width: '31%', paddingVertical: 15, borderRadius: 15, alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2
   },
   statValue: { fontSize: 18, fontWeight: 'bold', color: '#1a5c3a' },
