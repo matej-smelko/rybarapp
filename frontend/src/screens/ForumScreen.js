@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
-import { getPosts, toggleLike } from '../api/backend';
+import { getPosts, toggleLike, deletePost } from '../api/backend';
 
 const CATEGORIES = ['Vše', 'Tipy', 'Úlovky', 'Vybavení', 'Diskuse'];
 
@@ -24,7 +24,7 @@ function getInitials(name) {
 }
 
 export default function ForumScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -64,6 +64,28 @@ export default function ForumScreen({ navigation }) {
           : p
       ));
     } catch {}
+  }
+
+  function handleDeletePost(postId) {
+    Alert.alert('Smazat příspěvek', 'Opravdu chcete smazat tento příspěvek i se všemi komentáři?', [
+      { text: 'Zrušit', style: 'cancel' },
+      { text: 'Smazat', style: 'destructive', onPress: async () => {
+        try {
+          await deletePost(token, postId);
+          setPosts(prev => prev.filter(p => p.id !== postId));
+        } catch (err) {
+          Alert.alert('Chyba', err.response?.data?.error || 'Nelze smazat příspěvek.');
+        }
+      }},
+    ]);
+  }
+
+  function handleMenuPress(item) {
+    Alert.alert('Možnosti', null, [
+      { text: 'Editovat', onPress: () => navigation.navigate('AddPost', { editPost: item }) },
+      { text: 'Smazat', style: 'destructive', onPress: () => handleDeletePost(item.id) },
+      { text: 'Zrušit', style: 'cancel' },
+    ]);
   }
 
   const filteredPosts = useMemo(() => {
@@ -133,20 +155,27 @@ export default function ForumScreen({ navigation }) {
             
             return (
               <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.userInfo}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{initials}</Text>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.userInfo}>
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{initials}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.authorName}>{authorName}</Text>
+                        <Text style={styles.date}>{formatCZ(item.created_at || item.date)}</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.authorName}>{authorName}</Text>
-                      <Text style={styles.date}>{formatCZ(item.created_at || item.date)}</Text>
+                    <View style={styles.headerRight}>
+                      <View style={styles.categoryBadge}>
+                        <Text style={styles.categoryText}>{item.category}</Text>
+                      </View>
+                      {user && item.user_id === user.id && (
+                        <TouchableOpacity onPress={() => handleMenuPress(item)} style={styles.menuBtn}>
+                          <Text style={styles.menuDots}>⋮</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{item.category}</Text>
-                  </View>
-                </View>
 
                 <View style={styles.cardContent}>
                   <Text style={styles.title}>{item.title}</Text>
@@ -222,6 +251,9 @@ const styles = StyleSheet.create({
   avatarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   authorName: { fontSize: 15, fontWeight: '600', color: '#1a1a18' },
   date: { color: '#8a8a82', fontSize: 11, marginTop: 1 },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  menuBtn: { marginLeft: 8, padding: 4 },
+  menuDots: { fontSize: 18, fontWeight: '700', color: '#999' },
   categoryBadge: { backgroundColor: '#e8f4ed', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   categoryText: { color: '#1a5c3a', fontWeight: '600', fontSize: 11 },
   cardContent: { marginBottom: 12 },

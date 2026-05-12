@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { addPost } from '../api/backend';
+import { addPost, editPost } from '../api/backend';
 
 const categories = ['Tipy', 'Úlovky', 'Vybavení', 'Diskuse'];
 
-export default function AddPostScreen({ navigation }) {
+export default function AddPostScreen({ route, navigation }) {
   const { token } = useAuth();
-  const [category, setCategory] = useState(categories[0]);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
+  const editPostData = route.params?.editPost;
+  const [category, setCategory] = useState(editPostData?.category || categories[0]);
+  const [title, setTitle] = useState(editPostData?.title || '');
+  const [body, setBody] = useState(editPostData?.body || '');
   const [loading, setLoading] = useState(false);
 
   async function onSubmit() {
@@ -19,7 +20,11 @@ export default function AddPostScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await addPost(token, { category, title: title.trim(), body: body.trim() });
+      if (editPostData) {
+        await editPost(token, editPostData.id, { category, title: title.trim(), body: body.trim() });
+      } else {
+        await addPost(token, { category, title: title.trim(), body: body.trim() });
+      }
       navigation.goBack();
     } catch (err) {
       Alert.alert('Chyba', err.response?.data?.error || 'Nelze odeslat příspěvek.');
@@ -34,7 +39,7 @@ export default function AddPostScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.modalTitle}>Nový příspěvek</Text>
+        <Text style={styles.modalTitle}>{editPostData ? 'Upravit příspěvek' : 'Nový příspěvek'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -81,7 +86,7 @@ export default function AddPostScreen({ navigation }) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Přidat příspěvek</Text>
+              <Text style={styles.submitButtonText}>{editPostData ? 'Uložit změny' : 'Přidat příspěvek'}</Text>
             )}
           </TouchableOpacity>
         </View>

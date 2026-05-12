@@ -261,6 +261,48 @@ app.post('/api/posts', authMiddleware, async (req, res) => {
   }
 });
 
+app.put('/api/posts/:id', authMiddleware, async (req, res) => {
+  const { category, title, body } = req.body;
+  try {
+    const post = await db.get('SELECT * FROM forum_posts WHERE id = $1', [req.params.id]);
+    if (!post) return res.status(404).json({ error: 'Příspěvek nenalezen' });
+    if (post.user_id !== req.user.id) return res.status(403).json({ error: 'Nemáte oprávnění' });
+    await db.query(
+      'UPDATE forum_posts SET category = $1, title = $2, body = $3 WHERE id = $4',
+      [category || post.category, title || post.title, body || post.body, req.params.id]
+    );
+    const updated = await db.get(
+      'SELECT p.*, u.name AS author_name FROM forum_posts p JOIN users u ON u.id = p.user_id WHERE p.id = $1',
+      [req.params.id]
+    );
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.delete('/api/posts/:id', authMiddleware, async (req, res) => {
+  try {
+    const post = await db.get('SELECT * FROM forum_posts WHERE id = $1', [req.params.id]);
+    if (!post) return res.status(404).json({ error: 'Příspěvek nenalezen' });
+    if (post.user_id !== req.user.id) return res.status(403).json({ error: 'Nemáte oprávnění' });
+    // Smažeme komentáře, lajky komentářů, lajky příspěvku a nakonec příspěvek
+    const commentIds = await db.all('SELECT id FROM comments WHERE post_id = $1', [req.params.id]);
+    const ids = commentIds.map(r => r.id);
+    if (ids.length > 0) {
+      await db.query('DELETE FROM comment_likes WHERE comment_id = ANY($1)', [ids]);
+      await db.query('DELETE FROM comments WHERE post_id = $1', [req.params.id]);
+    }
+    await db.query('DELETE FROM forum_likes WHERE post_id = $1', [req.params.id]);
+    await db.query('DELETE FROM forum_posts WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
 app.post('/api/posts/:id/like', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;

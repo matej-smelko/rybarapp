@@ -69,6 +69,20 @@ export async function addPost(token, payload) {
   return response.data;
 }
 
+export async function editPost(token, postId, payload) {
+  const response = await api.put(`/api/posts/${postId}`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export async function deletePost(token, postId) {
+  const response = await api.delete(`/api/posts/${postId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
 export async function getComments(token, postId) {
   const response = await api.get(`/api/posts/${postId}/comments`, {
     headers: { Authorization: `Bearer ${token}` },
