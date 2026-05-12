@@ -151,12 +151,14 @@ export default function AdminUsersScreen() {
     <View style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.headerRow}>
-          <Text style={styles.header}>Rybáři</Text>
+          <View>
+            <Text style={styles.header}>Rybáři</Text>
+            <Text style={styles.subheader}>Správa uživatelů a jejich úlovků</Text>
+          </View>
           <TouchableOpacity style={styles.exportButton} onPress={exportToCsv}>
             <Text style={styles.exportText}>📥 Export</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.subheader}>Správa uživatelů a jejich úlovků</Text>
 
         {loading ? (
           <ActivityIndicator style={styles.loader} color="#1a5c3a" />
@@ -188,7 +190,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   header: {
     fontSize: 26,
@@ -198,7 +200,6 @@ const styles = StyleSheet.create({
   subheader: {
     fontSize: 14,
     color: '#5a5a55',
-    marginBottom: 20,
     marginTop: 4,
   },
   headerActions: {
