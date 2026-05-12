@@ -227,10 +227,16 @@ app.get('/api/users/me/stats', authMiddleware, async (req, res) => {
     const catches = await db.get('SELECT COUNT(*) AS cnt FROM catches WHERE user_id = $1', [req.user.id]);
     const posts = await db.get('SELECT COUNT(*) AS cnt FROM forum_posts WHERE user_id = $1', [req.user.id]);
     const comments = await db.get('SELECT COUNT(*) AS cnt FROM comments WHERE user_id = $1', [req.user.id]);
+    let rybariCount = 0;
+    if (req.user.role === 'admin') {
+      const r = await db.get("SELECT COUNT(*) AS cnt FROM users WHERE role = 'rybar'");
+      rybariCount = parseInt(r.cnt) || 0;
+    }
     res.json({
       catches: parseInt(catches.cnt) || 0,
       posts: parseInt(posts.cnt) || 0,
       comments: parseInt(comments.cnt) || 0,
+      rybariCount,
     });
   } catch (err) {
     res.status(500).json({ error: 'Chyba serveru' });

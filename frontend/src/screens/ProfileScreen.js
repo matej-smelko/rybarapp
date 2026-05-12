@@ -75,10 +75,17 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{stats?.catches ?? '-'}</Text>
-            <Text style={styles.statLabel}>Úlovků</Text>
-          </View>
+          {user?.role === 'admin' ? (
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{stats?.rybariCount ?? '-'}</Text>
+              <Text style={styles.statLabel}>Rybářů</Text>
+            </View>
+          ) : (
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{stats?.catches ?? '-'}</Text>
+              <Text style={styles.statLabel}>Úlovků</Text>
+            </View>
+          )}
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats?.posts ?? '-'}</Text>
             <Text style={styles.statLabel}>Příspěvků</Text>
