@@ -110,7 +110,7 @@ export default function AdminUsersScreen() {
             <Text style={styles.userEmail}>{item.email}</Text>
             <View style={styles.metaRow}>
               <View style={[styles.roleBadge, item.role === 'admin' ? styles.adminBadge : styles.rybarBadge]}>
-                <Text style={styles.roleText}>{item.role === 'admin' ? 'Admin' : 'Rybář'}</Text>
+                <Text style={[styles.roleText, item.role === 'admin' ? styles.roleAdminText : styles.roleRybarText]}>{item.role === 'admin' ? 'Admin' : 'Rybář'}</Text>
               </View>
               <Text style={styles.catchCount}>{item.catch_count} úlovků</Text>
             </View>
@@ -177,7 +177,7 @@ export default function AdminUsersScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: '#fcfcfc',
   },
   container: {
     flex: 1,
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
+    marginBottom: 4,
   },
   header: {
     fontSize: 26,
@@ -199,6 +200,10 @@ const styles = StyleSheet.create({
     color: '#7f7f7a',
     marginBottom: 20,
     marginTop: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
   exportButton: {
     backgroundColor: '#1a5c3a',
@@ -213,9 +218,13 @@ const styles = StyleSheet.create({
   },
   userCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
     borderWidth: 1,
     borderColor: '#f0f0f0',
   },
@@ -231,6 +240,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
+    shadowColor: '#1a5c3a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   avatarText: {
     color: '#fff',
@@ -257,9 +271,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   roleBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
   adminBadge: {
     backgroundColor: '#fbe9e7',
@@ -270,7 +284,12 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  roleAdminText: {
     color: '#d32f2f',
+  },
+  roleRybarText: {
+    color: '#2e7d32',
   },
   catchCount: {
     fontSize: 12,
@@ -278,15 +297,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   expandIcon: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 14,
+    color: '#b0b0a8',
     marginLeft: 10,
+    width: 20,
+    textAlign: 'center',
   },
   catchesSection: {
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#f5f3ee',
+    borderTopColor: '#f2f2ed',
   },
   catchLoader: {
     padding: 20,
@@ -301,7 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f5f3ee',
   },
@@ -319,8 +340,8 @@ const styles = StyleSheet.create({
   catchMeta: {
     fontSize: 12,
     color: '#1a5c3a',
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '700',
+    marginTop: 3,
   },
   catchRight: {
     alignItems: 'flex-end',
