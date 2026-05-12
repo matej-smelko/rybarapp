@@ -113,7 +113,7 @@ export default function CatchesScreen({ navigation }) {
             )}
             <View style={styles.weightBadge}>
               <Text style={styles.weightText}>
-                {item.weight_g >= 1000 ? `${(item.weight_g/1000).toFixed(2)} kg` : `${item.weight_g} g`}
+                {`${(item.weight_g / 1000).toFixed(2)} kg`}
               </Text>
             </View>
           </View>

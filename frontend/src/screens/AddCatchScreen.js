@@ -12,7 +12,7 @@ export default function AddCatchScreen({ route, navigation }) {
 
   // State pro formulář
   const [species, setSpecies] = useState(editData?.species || '');
-  const [weight, setWeight] = useState(editData?.weight_g?.toString() || '');
+  const [weight, setWeight] = useState(editData ? (editData.weight_g / 1000).toString() : '');
   const [length, setLength] = useState(editData?.length_cm?.toString() || '');
   const [revir, setRevir] = useState(editData?.revir || 'Revír Ostravice č. 1');
   const [bait, setBait] = useState(editData?.bait || '');
@@ -101,7 +101,7 @@ export default function AddCatchScreen({ route, navigation }) {
       if (editData) {
         await editCatch(token, editData.id, {
           species,
-          weight_g: Number(weight),
+          weight_g: Math.round(Number(weight) * 1000),
           length_cm: Number(length) || 0,
           revir,
           bait,
@@ -113,7 +113,7 @@ export default function AddCatchScreen({ route, navigation }) {
       } else {
         await addCatch(token, {
           species,
-          weight_g: Number(weight),
+          weight_g: Math.round(Number(weight) * 1000),
           length_cm: Number(length) || 0,
           revir,
           bait,
@@ -186,8 +186,8 @@ export default function AddCatchScreen({ route, navigation }) {
 
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.label}>VÁHA (G) *</Text>
-            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="3200" placeholderTextColor="#999" keyboardType="numeric" editable={!loading} />
+            <Text style={styles.label}>VÁHA (KG) *</Text>
+            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="3.2" placeholderTextColor="#999" keyboardType="numeric" editable={!loading} />
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.label}>DÉLKA (CM)</Text>

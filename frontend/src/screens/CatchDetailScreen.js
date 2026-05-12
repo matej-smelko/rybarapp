@@ -80,7 +80,7 @@ export default function CatchDetailScreen({ route, navigation }) {
           <View style={styles.infoBoxHalf}>
             <Text style={styles.infoLabel}>VÁHA</Text>
             <Text style={styles.infoValue}>
-              {data.weight_g >= 1000 ? `${(data.weight_g/1000).toFixed(2)} kg` : `${data.weight_g} g`}
+              {`${(data.weight_g / 1000).toFixed(2)} kg`}
             </Text>
           </View>
           <View style={styles.infoBoxHalf}>
