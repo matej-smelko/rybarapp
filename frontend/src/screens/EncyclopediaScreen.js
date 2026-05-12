@@ -66,7 +66,7 @@ export default function EncyclopediaScreen({ navigation }) {
         </View>
         {user?.role === 'admin' && (
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AdminFishForm')}>
-            <Text style={styles.addButtonText}>+ Ryba</Text>
+            <Text style={styles.addButtonText}>+ Přidat rybu</Text>
           </TouchableOpacity>
         )}
       </View>

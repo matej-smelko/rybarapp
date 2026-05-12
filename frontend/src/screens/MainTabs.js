@@ -11,7 +11,6 @@ import AdminUsersScreen from './AdminUsersScreen';
 
 const TAB_ICONS = {
   'Úlovky': '🎣',
-  'Rybáři': '👥',
   'Fórum': '💬',
   'Encyklopedie': '📖',
   'Profil': '👤',
@@ -80,14 +79,10 @@ export default function MainTabs({ navigation }) {
             ),
           })}
         >
-          {isAdmin ? (
-            <Tab.Screen name="Rybáři" component={AdminUsersScreen} />
-          ) : (
-            <Tab.Screen name="Úlovky" component={CatchesScreen} />
-          )}
+          <Tab.Screen name="Úlovky" component={CatchesScreen} />
           <Tab.Screen name="Fórum" component={ForumScreen} />
           <Tab.Screen name="Encyklopedie" component={EncyclopediaScreen} />
-          <Tab.Screen name="Profil" component={ProfileScreen} />
+          <Tab.Screen name="Profil" component={isAdmin ? AdminUsersScreen : ProfileScreen} />
         </Tab.Navigator>
       </View>
     </View>
