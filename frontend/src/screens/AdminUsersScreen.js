@@ -14,8 +14,7 @@ function getInitials(name) {
 }
 
 export default function AdminUsersScreen() {
-  const { token, user, logout } = useAuth();
-  const isAdminPage = user?.role === 'admin';
+  const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -153,16 +152,9 @@ export default function AdminUsersScreen() {
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.header}>Rybáři</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.exportButton} onPress={exportToCsv}>
-              <Text style={styles.exportText}>📥 Export</Text>
-            </TouchableOpacity>
-            {isAdminPage && (
-              <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-                <Text style={styles.logoutIcon}>🚪</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <TouchableOpacity style={styles.exportButton} onPress={exportToCsv}>
+            <Text style={styles.exportText}>📥 Export</Text>
+          </TouchableOpacity>
         </View>
         <Text style={styles.subheader}>Správa uživatelů a jejich úlovků</Text>
 
@@ -208,10 +200,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 4,
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
   exportButton: {
     backgroundColor: '#1a5c3a',
     paddingVertical: 10,
@@ -222,17 +210,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 14,
-  },
-  logoutButton: {
-    backgroundColor: '#fbe9e7',
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoutIcon: {
-    fontSize: 18,
   },
   userCard: {
     backgroundColor: '#fff',
