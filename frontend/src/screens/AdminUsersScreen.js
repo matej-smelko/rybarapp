@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getAdminUsers, getAdminUserCatches } from '../api/backend';
-import { File } from 'expo-file-system';
+import { writeAsStringAsync, cacheDirectory } from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
 function getInitials(name) {
@@ -82,9 +82,9 @@ export default function AdminUsersScreen() {
           csv += `${u.name};${u.email};;;;;\n`;
         }
       }
-      const file = new File(File.cacheDirectory, 'rybari_export.csv');
-      await file.write('\uFEFF' + csv);
-      await Sharing.shareAsync(file.uri, { mimeType: 'text/csv', dialogTitle: 'Export rybářů' });
+      const uri = cacheDirectory + 'rybari_export.csv';
+      await writeAsStringAsync(uri, '\uFEFF' + csv, { encoding: 'utf8' });
+      await Sharing.shareAsync(uri, { mimeType: 'text/csv', dialogTitle: 'Export rybářů' });
     } catch (err) {
       Alert.alert('Chyba', 'Export se nezdařil: ' + (err.message || ''));
     }
