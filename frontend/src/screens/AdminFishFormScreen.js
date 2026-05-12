@@ -106,7 +106,7 @@ export default function AdminFishFormScreen({ route, navigation }) {
         <Text style={styles.label}>LOVNÁ SEZÓNA (klepnutím přepneš)</Text>
         <View style={styles.seasonRow}>
           {MONTHS.map((m, i) => (
-            <TouchableOpacity key={m} onPress={() => toggleMonth(i)} style={[styles.seasonItem, season[i] ? styles.seasonActive : styles.seasonInactive]}>
+            <TouchableOpacity key={`${m}-${i}`} onPress={() => toggleMonth(i)} style={[styles.seasonItem, season[i] ? styles.seasonActive : styles.seasonInactive]}>
               <Text style={[styles.seasonText, season[i] && styles.seasonTextActive]}>{m}</Text>
             </TouchableOpacity>
           ))}
