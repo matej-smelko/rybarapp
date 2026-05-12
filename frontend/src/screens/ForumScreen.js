@@ -164,12 +164,11 @@ export default function ForumScreen({ navigation }) {
                       </Text>
                       <Text style={styles.statText}>{item.likes_count || 0}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.statItem}>
+                    <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('PostDetail', { post: item })}>
                       <Text style={styles.statIcon}>💬</Text>
                       <Text style={styles.statText}>{item.comments_count || 0}</Text>
                     </TouchableOpacity>
                   </View>
-                  <Text style={styles.detailLink}>Otevřít diskusi ›</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -247,5 +246,5 @@ const styles = StyleSheet.create({
   heartIcon: { fontSize: 18, marginRight: 4, color: '#999' },
   heartActive: { color: '#e74c3c' },
   statText: { fontSize: 14, fontWeight: '600', color: '#555' },
-  detailLink: { color: '#1a5c3a', fontWeight: '700', fontSize: 13 },
+
 });
