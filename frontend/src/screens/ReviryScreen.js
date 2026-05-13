@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import React, { useCallback, useState, useMemo } from 'react';
+import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getFisheries, deleteFishery } from '../api/backend';
@@ -8,6 +8,8 @@ export default function ReviryScreen({ navigation }) {
   const { user, token } = useAuth();
   const [reviry, setReviry] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [typFilter, setTypFilter] = useState('vše');
   const isAdmin = user?.role === 'admin';
 
   useFocusEffect(
@@ -24,6 +26,24 @@ export default function ReviryScreen({ navigation }) {
       load();
     }, [token])
   );
+
+  const filtered = useMemo(() => {
+    let list = reviry;
+    if (typFilter !== 'vše') {
+      list = list.filter(f => f.typ === typFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(f =>
+        (f.name || '').toLowerCase().includes(q) ||
+        (f.cislo || '').includes(q) ||
+        (f.location || f.obec || '').toLowerCase().includes(q) ||
+        (f.region || '').toLowerCase().includes(q) ||
+        (f.river_basin || '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [reviry, search, typFilter]);
 
   function handleMenu(item) {
     Alert.alert(item.name, null, [
@@ -79,6 +99,7 @@ export default function ReviryScreen({ navigation }) {
             <View style={styles.sizeRow}>
               {item.km && <Text style={styles.sizeText}>📏 {item.km} km</Text>}
               {item.ha && <Text style={styles.sizeText}>🌊 {item.ha} ha</Text>}
+              {item.river_basin && <Text style={styles.sizeText}>💧 {item.river_basin}</Text>}
             </View>
           </View>
         </View>
@@ -92,7 +113,7 @@ export default function ReviryScreen({ navigation }) {
         <View style={styles.titleRow}>
           <View>
             <Text style={styles.header}>Revíry</Text>
-            <Text style={styles.subheader}>{reviry.length} revírů</Text>
+            <Text style={styles.subheader}>{filtered.length} z {reviry.length} revírů</Text>
           </View>
           {isAdmin && (
             <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AdminRevirForm')}>
@@ -101,15 +122,51 @@ export default function ReviryScreen({ navigation }) {
           )}
         </View>
 
+        <View style={styles.searchContainer}>
+          <Text style={styles.searchIcon}>🔎</Text>
+          <TextInput
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Hledat revír, číslo, obec..."
+            placeholderTextColor="#7f7f7a"
+          />
+        </View>
+
+        <View style={{ marginBottom: 16 }}>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={['Vše', 'Kaprové', 'Pstruhové']}
+            keyExtractor={item => item}
+            renderItem={({ item }) => {
+              const val = item === 'Vše' ? 'vše' : item.toLowerCase();
+              return (
+                <TouchableOpacity
+                  style={[styles.chip, typFilter === val && styles.chipActive]}
+                  onPress={() => setTypFilter(val)}
+                >
+                  <Text style={[styles.chipText, typFilter === val && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+
         {loading ? (
           <ActivityIndicator style={styles.loader} color="#1a5c3a" />
+        ) : filtered.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Žádné revíry nenalezeny</Text>
+          </View>
         ) : (
           <FlatList
-            data={reviry}
+            data={filtered}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           />
         )}
       </View>
@@ -119,16 +176,25 @@ export default function ReviryScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#fff' },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20 },
+  container: { flex: 1, padding: 20 },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   header: { fontSize: 26, fontWeight: '700', color: '#1a5c3a' },
   subheader: { marginTop: 4, color: '#5a5a55', fontSize: 14 },
   addButton: { backgroundColor: '#1a5c3a', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 15 },
   addButtonText: { color: '#fff', fontWeight: '700' },
   listContent: { paddingBottom: 20 },
   loader: { marginTop: 50 },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { fontSize: 15, color: '#999' },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#edeae2', borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 18 },
+  searchIcon: { fontSize: 16, color: '#7f7f7a', marginRight: 10 },
+  searchInput: { flex: 1, fontSize: 15, color: '#1a1a18', padding: 0 },
+  chip: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee', marginRight: 10 },
+  chipActive: { backgroundColor: '#1a5c3a', borderColor: '#1a5c3a' },
+  chipText: { color: '#666', fontWeight: '500' },
+  chipTextActive: { color: '#fff' },
   card: {
-    backgroundColor: '#fff', borderRadius: 15, padding: 12, marginBottom: 15,
+    backgroundColor: '#fff', borderRadius: 15, padding: 14, marginBottom: 12,
     borderWidth: 1, borderColor: '#f3f3f3', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 10, elevation: 2,
   },
   cardRow: { flexDirection: 'row', alignItems: 'flex-start' },

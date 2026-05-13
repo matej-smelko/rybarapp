@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { addCatch, editCatch } from '../api/backend';
+import { addCatch, editCatch, getFisheries } from '../api/backend';
 import * as ImagePicker from 'expo-image-picker';
 import fishData from '../data/fish';
 
@@ -15,7 +15,7 @@ export default function AddCatchScreen({ route, navigation }) {
   const [species, setSpecies] = useState(editData?.species || '');
   const [weight, setWeight] = useState(editData ? (editData.weight_g / 1000).toString() : '');
   const [length, setLength] = useState(editData?.length_cm?.toString() || '');
-  const [revir, setRevir] = useState(editData?.revir || 'Revír Ostravice č. 1');
+  const [revir, setRevir] = useState(editData?.revir || '');
   const [bait, setBait] = useState(editData?.bait || '');
   const [note, setNote] = useState(editData?.note || '');
   const [date, setDate] = useState(editData?.caught_date || new Date().toISOString().split('T')[0]);
@@ -26,6 +26,13 @@ export default function AddCatchScreen({ route, navigation }) {
   const [image, setImage] = useState(editData?.image_url || null);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [fisheries, setFisheries] = useState([]);
+  const [revirSuggestions, setRevirSuggestions] = useState([]);
+  const [showRevirSuggestions, setShowRevirSuggestions] = useState(false);
+
+  useEffect(() => {
+    getFisheries(token).then(setFisheries).catch(() => {});
+  }, []);
 
   // --- FUNKCE PRO NAHRÁVÁNÍ NA CLOUDINARY ---
   const uploadImageToCloudinary = async (base64Data) => {
@@ -68,6 +75,22 @@ export default function AddCatchScreen({ route, navigation }) {
 
     if (!result.canceled) {
       setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  };
+
+  const handleRevirChange = (text) => {
+    setRevir(text);
+    if (text.length > 0) {
+      const q = text.toLowerCase();
+      const filtered = fisheries.filter(f =>
+        (f.name || '').toLowerCase().includes(q) ||
+        (f.location || f.obec || '').toLowerCase().includes(q) ||
+        (f.cislo || '').includes(q)
+      );
+      setRevirSuggestions(filtered);
+      setShowRevirSuggestions(true);
+    } else {
+      setShowRevirSuggestions(false);
     }
   };
 
@@ -202,7 +225,28 @@ export default function AddCatchScreen({ route, navigation }) {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>REVÍR *</Text>
-          <TextInput style={styles.input} value={revir} onChangeText={setRevir} placeholder="Název revíru" placeholderTextColor="#999" editable={!loading} />
+          <TextInput style={styles.input} value={revir} onChangeText={handleRevirChange} placeholder="Název revíru" placeholderTextColor="#999" editable={!loading} />
+          {showRevirSuggestions && revirSuggestions.length > 0 && (
+            <View style={styles.suggestions}>
+              <ScrollView style={{ maxHeight: 240 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                {revirSuggestions.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.id || index}
+                    style={styles.suggestionItem}
+                    onPress={() => {
+                      setRevir(item.name);
+                      setShowRevirSuggestions(false);
+                    }}
+                  >
+                    <Text style={styles.suggestionText}>{item.name}</Text>
+                    <Text style={styles.suggestionMeta}>
+                      {item.cislo && `č. ${item.cislo}`}{item.cislo && item.location ? ' • ' : ''}{item.location || item.obec || ''}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
 
         <View style={styles.row}>
@@ -276,6 +320,7 @@ const styles = StyleSheet.create({
   suggestions: { position: 'absolute', top: 70, left: 0, right: 0, backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#eee', zIndex: 100, elevation: 5 },
   suggestionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
   suggestionText: { fontSize: 15, color: '#333' },
+  suggestionMeta: { fontSize: 12, color: '#999', marginTop: 2 },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, marginBottom: 30 },
   cancelButton: { backgroundColor: '#f0f0f0', paddingVertical: 15, borderRadius: 12, width: '30%', alignItems: 'center' },
   cancelButtonText: { color: '#666', fontWeight: 'bold' },
