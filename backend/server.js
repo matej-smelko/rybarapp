@@ -188,7 +188,7 @@ async function initDB() {
       for (const f of fisheries) {
         await db.query(`INSERT INTO fisheries (id, cislo, name, location, river_basin, description, lat, lng, km, ha, typ, region)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-          [f.id, f.cislo, f.nazev, f.obec, '', '', null, null, f.km, f.ha, f.typ, f.region]);
+          [f.id, f.cislo, f.nazev, f.obec, f.river_basin || '', '', null, null, f.km, f.ha, f.typ, f.region]);
       }
       console.log(`✓ ${fisheries.length} revírů seedováno`);
     }

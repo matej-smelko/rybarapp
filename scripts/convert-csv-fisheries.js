@@ -5,6 +5,19 @@ const iconv = require('iconv-lite');
 const csvPath = path.join(__dirname, '..', 'reviry_cr.csv');
 const outputPath = path.join(__dirname, '..', 'backend', 'seed-fisheries.json');
 
+// Mapování regionu na povodí
+const REGION_BASIN = {
+  'Praha': 'Vltava',
+  'Středočeský': 'Vltava',
+  'Jihočeský': 'Vltava',
+  'Západočeský': 'Berounka',
+  'Severočeský': 'Ohře',
+  'Východočeský': 'Labe',
+  'Severní Morava a Slezsko': 'Odra',
+  'Moravský rybářský svaz': 'Morava',
+  'Rada ÚS': '',
+};
+
 const raw = fs.readFileSync(csvPath, 'utf8');
 const lines = raw.split('\n').filter(l => l.trim());
 
@@ -96,6 +109,7 @@ for (let i = 1; i < lines.length; i++) {
   }
   const region_full = fixRegion(parts[7]?.replace(/"/g, '').trim());
 
+  const basin = REGION_BASIN[region_full] || '';
   result.push({
     id: `fishery_${id}`,
     cislo,
@@ -105,6 +119,7 @@ for (let i = 1; i < lines.length; i++) {
     ha: ha || null,
     typ: typ || 'neurčeno',
     region: region_full || '',
+    river_basin: basin,
   });
 }
 

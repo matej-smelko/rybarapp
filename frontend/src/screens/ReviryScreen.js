@@ -75,7 +75,7 @@ export default function ReviryScreen({ navigation }) {
                 <Text style={styles.cisloText}>č. {item.cislo}</Text>
               )}
             </View>
-            <Text style={styles.metaText}>{item.obec || '?'}{item.region ? ` • ${item.region}` : ''}</Text>
+            <Text style={styles.metaText}>{item.location || item.obec || '?'}{item.region ? ` • ${item.region}` : ''}</Text>
             <View style={styles.sizeRow}>
               {item.km && <Text style={styles.sizeText}>📏 {item.km} km</Text>}
               {item.ha && <Text style={styles.sizeText}>🌊 {item.ha} ha</Text>}
