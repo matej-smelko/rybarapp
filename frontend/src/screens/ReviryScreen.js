@@ -41,11 +41,7 @@ function RevirCard({ item, isAdmin, onMenu }) {
             )}
           </View>
           <Text style={styles.metaText}>{item.location || item.obec || '?'}{item.region ? ` • ${item.region}` : ''}</Text>
-          <View style={styles.sizeRow}>
-            {item.km && <Text style={styles.sizeText}>📏 {item.km} km</Text>}
-            {item.ha && <Text style={styles.sizeText}>🌊 {item.ha} ha</Text>}
-            {item.river_basin && <Text style={styles.sizeText}>💧 {item.river_basin}</Text>}
-          </View>
+            {item.river_basin && <Text style={styles.metaText}>💧 {item.river_basin}</Text>}
         </View>
       </View>
     </View>
@@ -235,6 +231,4 @@ const styles = StyleSheet.create({
   typBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   cisloText: { fontSize: 12, color: '#888', fontWeight: '600' },
   metaText: { fontSize: 12, color: '#999', marginTop: 4 },
-  sizeRow: { flexDirection: 'row', marginTop: 5, gap: 12 },
-  sizeText: { fontSize: 12, color: '#666' },
 });
