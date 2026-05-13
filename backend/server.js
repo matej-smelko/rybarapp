@@ -78,12 +78,17 @@ async function initDB() {
       );
       CREATE TABLE IF NOT EXISTS fisheries (
         id TEXT PRIMARY KEY,
+        cislo TEXT,
         name TEXT NOT NULL,
         location TEXT,
         river_basin TEXT,
         description TEXT,
         lat REAL,
-        lng REAL
+        lng REAL,
+        km TEXT,
+        ha TEXT,
+        typ TEXT DEFAULT 'neurčeno',
+        region TEXT
       );
       CREATE TABLE IF NOT EXISTS forum_posts (
         id TEXT PRIMARY KEY,
@@ -119,6 +124,12 @@ async function initDB() {
     try { await db.query('ALTER TABLE comments ADD COLUMN parent_id TEXT REFERENCES comments(id)'); } catch {}
     // Migrace: přidání data narození do users
     try { await db.query('ALTER TABLE users ADD COLUMN date_of_birth TEXT'); } catch {}
+    // Migrace: nové sloupce pro fisheries
+    try { await db.query('ALTER TABLE fisheries ADD COLUMN cislo TEXT'); } catch {}
+    try { await db.query('ALTER TABLE fisheries ADD COLUMN km TEXT'); } catch {}
+    try { await db.query('ALTER TABLE fisheries ADD COLUMN ha TEXT'); } catch {}
+    try { await db.query('ALTER TABLE fisheries ADD COLUMN typ TEXT DEFAULT \'neurčeno\''); } catch {}
+    try { await db.query('ALTER TABLE fisheries ADD COLUMN region TEXT'); } catch {}
 
     // Tabulka ryb pro encyklopedii
     await db.query(`
@@ -170,22 +181,16 @@ async function initDB() {
       console.log('✓ Výchozí uživatel vytvořen');
     }
 
-    // Seed revírů
+    // Seed revírů z reálných dat (1749 českých revírů)
     const existingFisheries = await db.get('SELECT COUNT(*) AS cnt FROM fisheries');
     if (parseInt(existingFisheries.cnt) === 0) {
-      const fisheries = [
-        { id: 'revir-ostravice', name: 'Revír Ostravice č. 1', location: 'Ostravice', river_basin: 'Odra', description: 'Populární revír s pestrou skladbou ryb. Doporučuji místa u jezu.' },
-        { id: 'revir-odra', name: 'Revír Odra – Svinov', location: 'Ostrava-Svinov', river_basin: 'Odra', description: 'Kvalitní dravčí revír se silnými kusy. Vhodný pro přívlač.' },
-        { id: 'revir-olse', name: 'Revír Olše – Těšín', location: 'Český Těšín', river_basin: 'Odra', description: 'Krásné pstruhové vody v podhůří Beskyd.' },
-        { id: 'revir-morava', name: 'Revír Morava – Olomouc', location: 'Olomouc', river_basin: 'Morava', description: 'Nížinný revír s bohatou populací kaprovitých ryb.' },
-        { id: 'revir-becva', name: 'Revír Bečva – Přerov', location: 'Přerov', river_basin: 'Morava', description: 'Podhorský revír s proudnou vodou. Ráj muškařů.' },
-        { id: 'harta', name: 'Přehrada Slezská Harta', location: 'Budišov nad Budišovkou', river_basin: 'Morava', description: 'Vyhlášená přehrada na dravce. Nejlepší je lov z lodi.' },
-      ];
+      const fisheries = require('./seed-fisheries.json');
       for (const f of fisheries) {
-        await db.query('INSERT INTO fisheries (id, name, location, river_basin, description) VALUES ($1, $2, $3, $4, $5)',
-          [f.id, f.name, f.location, f.river_basin, f.description]);
+        await db.query(`INSERT INTO fisheries (id, cislo, name, location, river_basin, description, lat, lng, km, ha, typ, region)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          [f.id, f.cislo, f.nazev, f.obec, '', '', null, null, f.km, f.ha, f.typ, f.region]);
       }
-      console.log('✓ Revíry seedovány');
+      console.log(`✓ ${fisheries.length} revírů seedováno`);
     }
   } catch (err) {
     console.error('Chyba inicializace DB:', err);
@@ -274,14 +279,15 @@ app.get('/api/fisheries', async (req, res) => {
 });
 
 app.post('/api/fisheries', authMiddleware, adminMiddleware, async (req, res) => {
-  const { name, location, river_basin, description, lat, lng } = req.body;
+  const { name, location, river_basin, description, lat, lng, cislo, km, ha, typ, region } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Název revíru je povinný' });
   }
   try {
     const id = uuidv4();
-    await db.query('INSERT INTO fisheries (id, name, location, river_basin, description, lat, lng) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [id, name.trim(), location || '', river_basin || '', description || '', lat || null, lng || null]);
+    await db.query(`INSERT INTO fisheries (id, cislo, name, location, river_basin, description, lat, lng, km, ha, typ, region)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [id, cislo || null, name.trim(), location || '', river_basin || '', description || '', lat || null, lng || null, km || null, ha || null, typ || 'neurčeno', region || '']);
     const fishery = await db.get('SELECT * FROM fisheries WHERE id = $1', [id]);
     res.status(201).json(fishery);
   } catch (err) {
@@ -291,12 +297,12 @@ app.post('/api/fisheries', authMiddleware, adminMiddleware, async (req, res) => 
 });
 
 app.put('/api/fisheries/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  const { name, location, river_basin, description, lat, lng } = req.body;
+  const { name, location, river_basin, description, lat, lng, cislo, km, ha, typ, region } = req.body;
   try {
     const existing = await db.get('SELECT * FROM fisheries WHERE id = $1', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'Revír nenalezen' });
-    await db.query('UPDATE fisheries SET name=$1, location=$2, river_basin=$3, description=$4, lat=$5, lng=$6 WHERE id=$7',
-      [name || existing.name, location ?? existing.location, river_basin ?? existing.river_basin, description ?? existing.description, lat ?? existing.lat, lng ?? existing.lng, req.params.id]);
+    await db.query(`UPDATE fisheries SET cislo=$1, name=$2, location=$3, river_basin=$4, description=$5, lat=$6, lng=$7, km=$8, ha=$9, typ=$10, region=$11 WHERE id=$12`,
+      [cislo ?? existing.cislo, name || existing.name, location ?? existing.location, river_basin ?? existing.river_basin, description ?? existing.description, lat ?? existing.lat, lng ?? existing.lng, km ?? existing.km, ha ?? existing.ha, typ ?? existing.typ, region ?? existing.region, req.params.id]);
     const fishery = await db.get('SELECT * FROM fisheries WHERE id = $1', [req.params.id]);
     res.json(fishery);
   } catch (err) {
