@@ -18,7 +18,7 @@ export default function AdminRevirFormScreen({ route, navigation }) {
   const [cislo, setCislo] = useState(editFishery?.cislo || '');
   const [km, setKm] = useState(editFishery?.km || '');
   const [ha, setHa] = useState(editFishery?.ha || '');
-  const [typ, setTyp] = useState(editFishery?.typ || 'kaprové');
+  const [typ, setTyp] = useState(editFishery?.typ === 'pstruhové' || editFishery?.typ === 'pstruhový' ? 'pstruhový' : 'kaprové');
   const [region, setRegion] = useState(editFishery?.region || '');
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +35,7 @@ export default function AdminRevirFormScreen({ route, navigation }) {
       cislo: cislo.trim() || null,
       km: km.trim() || null,
       ha: ha.trim() || null,
-      typ: typ.trim() || 'neurčeno',
+      typ: typ === 'mimopstruhový' ? 'kaprové' : typ === 'pstruhový' ? 'pstruhové' : 'neurčeno',
       region: region.trim(),
     };
     try {
@@ -77,11 +77,11 @@ export default function AdminRevirFormScreen({ route, navigation }) {
 
         <Text style={styles.label}>TYP REVÍRU</Text>
         <View style={styles.typRow}>
-          <TouchableOpacity style={[styles.typOption, typ === 'kaprové' && styles.typSelected]} onPress={() => setTyp('kaprové')} disabled={loading}>
-            <Text style={[styles.typOptionText, typ === 'kaprové' && styles.typSelectedText]}>Kaprové</Text>
+          <TouchableOpacity style={[styles.typOption, typ === 'mimopstruhový' && styles.typSelected]} onPress={() => setTyp('mimopstruhový')} disabled={loading}>
+            <Text style={[styles.typOptionText, typ === 'mimopstruhový' && styles.typSelectedText]}>Mimopstruhový</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.typOption, typ === 'pstruhové' && styles.typSelected]} onPress={() => setTyp('pstruhové')} disabled={loading}>
-            <Text style={[styles.typOptionText, typ === 'pstruhové' && styles.typSelectedText]}>Pstruhové</Text>
+          <TouchableOpacity style={[styles.typOption, typ === 'pstruhový' && styles.typSelected]} onPress={() => setTyp('pstruhový')} disabled={loading}>
+            <Text style={[styles.typOptionText, typ === 'pstruhový' && styles.typSelectedText]}>Pstruhový</Text>
           </TouchableOpacity>
         </View>
 

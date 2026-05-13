@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import React, { useCallback, useState, useMemo } from 'react';
+import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getAdminUsers, getAdminUserCatches } from '../api/backend';
@@ -17,6 +17,7 @@ export default function AdminUsersScreen() {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [userCatches, setUserCatches] = useState({});
   const [loadingCatches, setLoadingCatches] = useState({});
@@ -37,6 +38,15 @@ export default function AdminUsersScreen() {
       load();
     }, [token])
   );
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return users;
+    const q = search.trim().toLowerCase();
+    return users.filter(u =>
+      (u.name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q)
+    );
+  }, [users, search]);
 
   async function toggleUser(userId) {
     if (expandedId === userId) {
@@ -160,11 +170,22 @@ export default function AdminUsersScreen() {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.searchContainer}>
+          <Text style={styles.searchIcon}>🔎</Text>
+          <TextInput
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Hledat podle jména nebo e-mailu..."
+            placeholderTextColor="#7f7f7a"
+          />
+        </View>
+
         {loading ? (
           <ActivityIndicator style={styles.loader} color="#1a5c3a" />
         ) : (
           <FlatList
-            data={users}
+            data={filtered}
             keyExtractor={(item) => item.id}
             renderItem={renderUser}
             contentContainerStyle={styles.listContent}
@@ -190,7 +211,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   header: {
     fontSize: 26,
@@ -217,6 +238,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#edeae2', borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 18 },
+  searchIcon: { fontSize: 16, color: '#7f7f7a', marginRight: 10 },
+  searchInput: { flex: 1, fontSize: 15, color: '#1a1a18', padding: 0 },
   userCard: {
     backgroundColor: '#fff',
     borderRadius: 20,

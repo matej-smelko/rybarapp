@@ -1,8 +1,58 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo, useRef } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getFisheries, deleteFishery } from '../api/backend';
+
+function RevirCard({ item, isAdmin, onMenu }) {
+  function typColor(typ) {
+    return typ === 'pstruhové' || typ === 'pstruhový' ? '#2e7daf' : '#1a5c3a';
+  }
+
+  function isPstruhove(typ) {
+    return typ === 'pstruhové' || typ === 'pstruhový';
+  }
+
+  function displayTyp(typ) {
+    return isPstruhove(typ) ? 'pstruhový' : 'mimopstruhový';
+  }
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardRow}>
+        <View style={[styles.iconWrapper, { backgroundColor: typColor(item.typ) + '18' }]}>
+          <Text style={styles.iconEmoji}>🌊</Text>
+        </View>
+        <View style={styles.cardText}>
+          <View style={styles.cardTitleRow}>
+            <Text style={styles.revirName} numberOfLines={1}>{item.name}</Text>
+            {isAdmin && (
+              <TouchableOpacity onPress={() => onMenu(item)} style={styles.menuBtn}>
+                <Text style={styles.menuDots}>⋮</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.badgeRow}>
+            <View style={[styles.typBadge, { backgroundColor: typColor(item.typ) }]}>
+              <Text style={styles.typBadgeText}>{displayTyp(item.typ)}</Text>
+            </View>
+            {item.cislo && (
+              <Text style={styles.cisloText}>č. {item.cislo}</Text>
+            )}
+          </View>
+          <Text style={styles.metaText}>{item.location || item.obec || '?'}{item.region ? ` • ${item.region}` : ''}</Text>
+          <View style={styles.sizeRow}>
+            {item.km && <Text style={styles.sizeText}>📏 {item.km} km</Text>}
+            {item.ha && <Text style={styles.sizeText}>🌊 {item.ha} ha</Text>}
+            {item.river_basin && <Text style={styles.sizeText}>💧 {item.river_basin}</Text>}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const MemoCard = React.memo(RevirCard);
 
 export default function ReviryScreen({ navigation }) {
   const { user, token } = useAuth();
@@ -11,6 +61,7 @@ export default function ReviryScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [typFilter, setTypFilter] = useState('vše');
   const isAdmin = user?.role === 'admin';
+  const flatRef = useRef(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -30,7 +81,7 @@ export default function ReviryScreen({ navigation }) {
   const filtered = useMemo(() => {
     let list = reviry;
     if (typFilter !== 'vše') {
-      list = list.filter(f => f.typ === typFilter);
+      list = list.filter(f => f.typ === typFilter || f.typ === (typFilter === 'kaprové' ? 'mimopstruhový' : 'pstruhový'));
     }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -67,46 +118,6 @@ export default function ReviryScreen({ navigation }) {
     ]);
   }
 
-  function typColor(typ) {
-    return typ === 'pstruhové' ? '#2e7daf' : '#1a5c3a';
-  }
-
-  const renderItem = ({ item }) => {
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardRow}>
-          <View style={[styles.iconWrapper, { backgroundColor: typColor(item.typ) + '18' }]}>
-            <Text style={styles.iconEmoji}>🌊</Text>
-          </View>
-          <View style={styles.cardText}>
-            <View style={styles.cardTitleRow}>
-              <Text style={styles.revirName} numberOfLines={1}>{item.name}</Text>
-              {isAdmin && (
-                <TouchableOpacity onPress={() => handleMenu(item)} style={styles.menuBtn}>
-                  <Text style={styles.menuDots}>⋮</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={styles.badgeRow}>
-              <View style={[styles.typBadge, { backgroundColor: typColor(item.typ) }]}>
-                <Text style={styles.typBadgeText}>{item.typ}</Text>
-              </View>
-              {item.cislo && (
-                <Text style={styles.cisloText}>č. {item.cislo}</Text>
-              )}
-            </View>
-            <Text style={styles.metaText}>{item.location || item.obec || '?'}{item.region ? ` • ${item.region}` : ''}</Text>
-            <View style={styles.sizeRow}>
-              {item.km && <Text style={styles.sizeText}>📏 {item.km} km</Text>}
-              {item.ha && <Text style={styles.sizeText}>🌊 {item.ha} ha</Text>}
-              {item.river_basin && <Text style={styles.sizeText}>💧 {item.river_basin}</Text>}
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
   return (
     <View style={styles.safeArea}>
       <View style={styles.container}>
@@ -137,10 +148,10 @@ export default function ReviryScreen({ navigation }) {
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
-            data={['Vše', 'Kaprové', 'Pstruhové']}
+            data={['Vše', 'Mimopstruhový', 'Pstruhový']}
             keyExtractor={item => item}
             renderItem={({ item }) => {
-              const val = item === 'Vše' ? 'vše' : item.toLowerCase();
+              const val = item === 'Vše' ? 'vše' : item === 'Mimopstruhový' ? 'kaprové' : 'pstruhové';
               return (
                 <TouchableOpacity
                   style={[styles.chip, typFilter === val && styles.chipActive]}
@@ -161,14 +172,28 @@ export default function ReviryScreen({ navigation }) {
           </View>
         ) : (
           <FlatList
+            ref={flatRef}
             data={filtered}
             keyExtractor={(item) => item.id}
-            renderItem={renderItem}
+            renderItem={({ item }) => (
+              <MemoCard item={item} isAdmin={isAdmin} onMenu={handleMenu} />
+            )}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            windowSize={5}
+            initialNumToRender={12}
+            maxToRenderPerBatch={15}
+            removeClippedSubviews={true}
+            onScrollToIndexFailed={({ index, averageItemLength }) => {
+              const offset = index * averageItemLength;
+              flatRef.current?.scrollToOffset({ offset, animated: false });
+              setTimeout(() => {
+                flatRef.current?.scrollToIndex({ index, animated: false, viewPosition: 0 });
+              }, 50);
+            }}
           />
-        )}
+          )}
       </View>
     </View>
   );
