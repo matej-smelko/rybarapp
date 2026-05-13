@@ -17,7 +17,7 @@ function formatDate(dateStr) {
   return `${d}. ${m}. ${y}`;
 }
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }) {
   const { user, token, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState(null);
@@ -34,6 +34,12 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.safeArea, { paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="dark-content" />
+      <View style={[styles.backBar, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backArrow}>←</Text>
+          <Text style={styles.backText}>Zpět</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         <View style={styles.profileHeader}>
@@ -111,6 +117,26 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
+  },
+  backBar: {
+    paddingHorizontal: 20,
+    paddingBottom: 4,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  backArrow: {
+    fontSize: 20,
+    color: '#1a5c3a',
+    marginRight: 4,
+    fontWeight: '600',
+  },
+  backText: {
+    fontSize: 16,
+    color: '#1a5c3a',
+    fontWeight: '600',
   },
   scrollContent: {
     padding: 24,

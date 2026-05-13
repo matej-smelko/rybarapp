@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import CatchesScreen from './CatchesScreen';
 import ForumScreen from './ForumScreen';
 import EncyclopediaScreen from './EncyclopediaScreen';
-import ProfileScreen from './ProfileScreen';
+import ReviryScreen from './ReviryScreen';
 import AdminUsersScreen from './AdminUsersScreen';
 
 const TAB_ICONS = {
@@ -14,7 +14,7 @@ const TAB_ICONS = {
   'Rybáři': '👥',
   'Fórum': '💬',
   'Encyklopedie': '📖',
-  'Profil': '👤',
+  'Revíry': '🗺️',
 };
 
 const Tab = createBottomTabNavigator();
@@ -43,7 +43,7 @@ export default function MainTabs({ navigation }) {
             </Text>
             <Text style={styles.brandSubtitle}>Přehled úlovků</Text>
           </View>
-          <TouchableOpacity style={styles.userPanel} onPress={() => navigation.navigate('Profil')}>
+          <TouchableOpacity style={styles.userPanel} onPress={() => navigation.navigate('Profile')}>
             <Text style={styles.userName}>{firstName}</Text>
             <View style={styles.userBadge}>
               <Text style={styles.userInitials}>{initials}</Text>
@@ -87,7 +87,7 @@ export default function MainTabs({ navigation }) {
           )}
           <Tab.Screen name="Fórum" component={ForumScreen} />
           <Tab.Screen name="Encyklopedie" component={EncyclopediaScreen} />
-          <Tab.Screen name="Profil" component={ProfileScreen} />
+          <Tab.Screen name="Revíry" component={ReviryScreen} />
         </Tab.Navigator>
       </View>
     </View>

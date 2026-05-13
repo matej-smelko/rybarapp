@@ -131,6 +131,36 @@ export async function editComment(token, commentId, body) {
   return response.data;
 }
 
+// ==================== REVÍRY ====================
+
+export async function getFisheries(token) {
+  const response = await api.get('/api/fisheries', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return response.data;
+}
+
+export async function addFishery(token, payload) {
+  const response = await api.post('/api/fisheries', payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export async function updateFishery(token, fisheryId, payload) {
+  const response = await api.put(`/api/fisheries/${fisheryId}`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export async function deleteFishery(token, fisheryId) {
+  const response = await api.delete(`/api/fisheries/${fisheryId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
 // ==================== PROFIL / STATISTIKY ====================
 
 // ==================== ADMIN / UŽIVATELÉ ====================

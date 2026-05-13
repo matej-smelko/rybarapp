@@ -169,6 +169,24 @@ async function initDB() {
         ['u1', 'Matěj Šmelko', defaultEmail, hash, 'rybar']);
       console.log('✓ Výchozí uživatel vytvořen');
     }
+
+    // Seed revírů
+    const existingFisheries = await db.get('SELECT COUNT(*) AS cnt FROM fisheries');
+    if (parseInt(existingFisheries.cnt) === 0) {
+      const fisheries = [
+        { id: 'revir-ostravice', name: 'Revír Ostravice č. 1', location: 'Ostravice', river_basin: 'Odra', description: 'Populární revír s pestrou skladbou ryb. Doporučuji místa u jezu.' },
+        { id: 'revir-odra', name: 'Revír Odra – Svinov', location: 'Ostrava-Svinov', river_basin: 'Odra', description: 'Kvalitní dravčí revír se silnými kusy. Vhodný pro přívlač.' },
+        { id: 'revir-olse', name: 'Revír Olše – Těšín', location: 'Český Těšín', river_basin: 'Odra', description: 'Krásné pstruhové vody v podhůří Beskyd.' },
+        { id: 'revir-morava', name: 'Revír Morava – Olomouc', location: 'Olomouc', river_basin: 'Morava', description: 'Nížinný revír s bohatou populací kaprovitých ryb.' },
+        { id: 'revir-becva', name: 'Revír Bečva – Přerov', location: 'Přerov', river_basin: 'Morava', description: 'Podhorský revír s proudnou vodou. Ráj muškařů.' },
+        { id: 'harta', name: 'Přehrada Slezská Harta', location: 'Budišov nad Budišovkou', river_basin: 'Morava', description: 'Vyhlášená přehrada na dravce. Nejlepší je lov z lodi.' },
+      ];
+      for (const f of fisheries) {
+        await db.query('INSERT INTO fisheries (id, name, location, river_basin, description) VALUES ($1, $2, $3, $4, $5)',
+          [f.id, f.name, f.location, f.river_basin, f.description]);
+      }
+      console.log('✓ Revíry seedovány');
+    }
   } catch (err) {
     console.error('Chyba inicializace DB:', err);
   }
@@ -242,6 +260,64 @@ app.get('/api/users/me/stats', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Chyba serveru' });
   }
 });
+
+// ==================== REVÍRY ====================
+
+app.get('/api/fisheries', async (req, res) => {
+  try {
+    const fisheries = await db.all('SELECT * FROM fisheries ORDER BY name ASC');
+    res.json(fisheries);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.post('/api/fisheries', authMiddleware, adminMiddleware, async (req, res) => {
+  const { name, location, river_basin, description, lat, lng } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Název revíru je povinný' });
+  }
+  try {
+    const id = uuidv4();
+    await db.query('INSERT INTO fisheries (id, name, location, river_basin, description, lat, lng) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [id, name.trim(), location || '', river_basin || '', description || '', lat || null, lng || null]);
+    const fishery = await db.get('SELECT * FROM fisheries WHERE id = $1', [id]);
+    res.status(201).json(fishery);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.put('/api/fisheries/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { name, location, river_basin, description, lat, lng } = req.body;
+  try {
+    const existing = await db.get('SELECT * FROM fisheries WHERE id = $1', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Revír nenalezen' });
+    await db.query('UPDATE fisheries SET name=$1, location=$2, river_basin=$3, description=$4, lat=$5, lng=$6 WHERE id=$7',
+      [name || existing.name, location ?? existing.location, river_basin ?? existing.river_basin, description ?? existing.description, lat ?? existing.lat, lng ?? existing.lng, req.params.id]);
+    const fishery = await db.get('SELECT * FROM fisheries WHERE id = $1', [req.params.id]);
+    res.json(fishery);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+app.delete('/api/fisheries/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const existing = await db.get('SELECT * FROM fisheries WHERE id = $1', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Revír nenalezen' });
+    await db.query('DELETE FROM fisheries WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+// ==================== ÚLOVKY ====================
 
 app.get('/api/catches', authMiddleware, async (req, res) => {
   try {

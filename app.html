@@ -644,6 +644,14 @@ const FISH_EMOJI = { 'Kapr': '🎣', 'Štika': '🐟', 'Pstruh': '🐠', 'Candá
 const FISH_SPECIES = ['Kapr', 'Štika', 'Pstruh', 'Candát', 'Sumec', 'Lín', 'Okoun', 'Cejn'];
 const REVIRY = ['Revír Ostravice č. 1', 'Revír Odra – Svinov', 'Revír Olše – Těšín', 'Revír Morava – Olomouc', 'Revír Bečva – Přerov', 'Přehrada Slezská Harta'];
 const FORUM_CATS = ['Tipy', 'Úlovky', 'Vybavení', 'Diskuse'];
+const REVIRY_DB = [
+  { id: 'revir-ostravice', name: 'Revír Ostravice č. 1', location: 'Ostravice', river_basin: 'Odra', fish: ['Kapr', 'Štika', 'Pstruh', 'Okoun'], rating: 4, desc: 'Populární revír s pestrou skladbou ryb. Doporučuji místa u jezu.' },
+  { id: 'revir-odra', name: 'Revír Odra – Svinov', location: 'Ostrava-Svinov', river_basin: 'Odra', fish: ['Štika', 'Candát', 'Okoun', 'Kapr'], rating: 5, desc: 'Kvalitní dravčí revír se silnými kusy. Vhodný pro přívlač.' },
+  { id: 'revir-olse', name: 'Revír Olše – Těšín', location: 'Český Těšín', river_basin: 'Odra', fish: ['Pstruh', 'Lipan', 'Jelec'], rating: 3, desc: 'Krásné pstruhové vody v podhůří Beskyd.' },
+  { id: 'revir-morava', name: 'Revír Morava – Olomouc', location: 'Olomouc', river_basin: 'Morava', fish: ['Kapr', 'Cejn', 'Plotice', 'Štika'], rating: 4, desc: 'Nížinný revír s bohatou populací kaprovitých ryb.' },
+  { id: 'revir-becva', name: 'Revír Bečva – Přerov', location: 'Přerov', river_basin: 'Morava', fish: ['Pstruh', 'Parma', 'Ostroretka'], rating: 4, desc: 'Podhorský revír s proudnou vodou. Ráj muškařů.' },
+  { id: 'harta', name: 'Přehrada Slezská Harta', location: 'Budišov nad Budišovkou', river_basin: 'Morava', fish: ['Candát', 'Kapr', 'Štika', 'Sumec'], rating: 5, desc: 'Vyhlášená přehrada na dravce. Nejlepší je lov z lodi.' },
+];
 
 // ENCYCLOPEDIA DATA
 const FISH_DB = [
@@ -1565,19 +1573,20 @@ function renderMain() {
   else if (state.modal === 'addPost') content = renderAddPostModal();
   else if (state.modal === 'catchDetail') content = renderCatchDetail();
   else if (state.modal === 'postDetail') content = renderPostDetail();
+  else if (state.modal === 'profile') content = renderProfileModal();
 
   let tabContent = '';
   if (state.tab === 'catches') tabContent = renderCatches();
   else if (state.tab === 'forum') tabContent = renderForum();
   else if (state.tab === 'encyc') tabContent = renderEncyc();
-  else if (state.tab === 'profile') tabContent = renderProfile();
+  else if (state.tab === 'reviry') tabContent = renderReviry();
 
   return `
   <div class="topbar">
     <div class="topbar-title">Rybář<span>App</span></div>
     <div class="topbar-user">
       <span style="font-size:13px;color:var(--text2)">${user.name.split(' ')[0]}</span>
-      <div class="avatar" title="Profil">${getInitials(user.name)}</div>
+      <div class="avatar" title="Profil" onclick="setState({modal:'profile'})">${getInitials(user.name)}</div>
     </div>
   </div>
   <div class="content" id="main-content">
@@ -1593,8 +1602,8 @@ function renderMain() {
     <button class="nav-btn ${state.tab==='encyc'?'active':''}" onclick="setState({tab:'encyc',modal:null,encycFish:null})">
       <span class="nav-icon">📖</span>Ryby
     </button>
-    <button class="nav-btn ${state.tab==='profile'?'active':''}" onclick="setState({tab:'profile',modal:null})">
-      <span class="nav-icon">👤</span>Profil
+    <button class="nav-btn ${state.tab==='reviry'?'active':''}" onclick="setState({tab:'reviry',modal:null})">
+      <span class="nav-icon">🗺️</span>Revíry
     </button>
   </div>
   ${content}`;
@@ -1667,33 +1676,67 @@ function renderForum() {
   }).join('')}`;
 }
 
-function renderProfile() {
+function renderProfileModal() {
   const user = state.loggedUser;
   const catches = getUserCatches();
   const posts = DB.posts.filter(p => p.userId === user.id);
   const species = [...new Set(catches.map(c => c.species))];
 
-  return `
-  <div class="profile-hero">
-    <div class="profile-avatar-big">${getInitials(user.name)}</div>
-    <div>
-      <div class="profile-name">${user.name}</div>
-      <div class="profile-email">${user.email}</div>
-      <div class="profile-role">${user.role}</div>
+  return `<div class="modal-overlay" onclick="if(event.target===this)setState({modal:null})">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="back-btn" onclick="setState({modal:null})">← Zavřít</button>
+    <div class="profile-hero">
+      <div class="profile-avatar-big">${getInitials(user.name)}</div>
+      <div>
+        <div class="profile-name">${user.name}</div>
+        <div class="profile-email">${user.email}</div>
+        <div class="profile-role">${user.role}</div>
+      </div>
     </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val">${catches.length}</div><div class="stat-lbl">Úlovků</div></div>
+      <div class="stat-card"><div class="stat-val">${posts.length}</div><div class="stat-lbl">Příspěvků</div></div>
+      <div class="stat-card"><div class="stat-val">${species.length}</div><div class="stat-lbl">Druhů</div></div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">NASTAVENÍ ÚČTU</div>
+      <div class="list-item"><span class="list-item-icon">👤</span><span class="list-item-label">Jméno</span><span class="list-item-value">${user.name}</span></div>
+      <div class="list-item"><span class="list-item-icon">✉️</span><span class="list-item-label">E-mail</span><span class="list-item-value">${user.email}</span></div>
+      <div class="list-item"><span class="list-item-icon">🏆</span><span class="list-item-label">Role</span><span class="list-item-value">${user.role}</span></div>
+    </div>
+    <button class="btn btn-danger" onclick="logout()">Odhlásit se</button>
+  </div></div>`;
+}
+
+function renderReviry() {
+  return `
+  <div class="section-header">
+    <div class="section-title">Revíry</div>
+    <span style="font-size:12px;color:var(--text3)">${REVIRY_DB.length} revírů</span>
   </div>
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-val">${catches.length}</div><div class="stat-lbl">Úlovků</div></div>
-    <div class="stat-card"><div class="stat-val">${posts.length}</div><div class="stat-lbl">Příspěvků</div></div>
-    <div class="stat-card"><div class="stat-val">${species.length}</div><div class="stat-lbl">Druhů</div></div>
+  <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">
+    Přehled rybářských revírů v Moravskoslezském kraji a okolí.
   </div>
-  <div style="background:var(--surface2);border-radius:var(--radius);padding:16px;margin-bottom:16px">
-    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">NASTAVENÍ ÚČTU</div>
-    <div class="list-item"><span class="list-item-icon">👤</span><span class="list-item-label">Jméno</span><span class="list-item-value">${user.name}</span></div>
-    <div class="list-item"><span class="list-item-icon">✉️</span><span class="list-item-label">E-mail</span><span class="list-item-value">${user.email}</span></div>
-    <div class="list-item"><span class="list-item-icon">🏆</span><span class="list-item-label">Role</span><span class="list-item-value">${user.role}</span></div>
-  </div>
-  <button class="btn btn-danger" onclick="logout()">Odhlásit se</button>`;
+  ${REVIRY_DB.map(r => {
+    const userCatches = DB.catches.filter(c => c.revir === r.name);
+    return `
+    <div class="catch-card" style="cursor:default">
+      <div class="catch-icon" style="background:var(--accent-light);font-size:18px">🗺️</div>
+      <div class="catch-info">
+        <div class="catch-species">${r.name}</div>
+        <div class="catch-meta">${r.location} · Povodí ${r.river_basin}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+          ${r.fish.map(f => `<span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--primary-light);color:var(--primary)">${f}</span>`).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.4">${r.desc}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">
+          ${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)} ·
+          ${userCatches.length > 0 ? `<span style="color:var(--primary)">${userCatches.length} úlovků odtud</span>` : 'Zatím zde nemáte úlovky'}
+        </div>
+      </div>
+    </div>`;
+  }).join('')}`;
 }
 
 function renderCatchDetail() {
